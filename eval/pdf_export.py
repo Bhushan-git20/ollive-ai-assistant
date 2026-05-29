@@ -1,5 +1,6 @@
 from fpdf import FPDF
 from datetime import datetime
+import textwrap
 
 
 class EvalReportPDF(FPDF):
@@ -84,10 +85,13 @@ class EvalReportPDF(FPDF):
             self.cell(0, 6, f"[{r['id']}] {r['category'].upper()} - {status_icon}", ln=True)
             self.set_text_color(0, 0, 0)
             self.set_font("Helvetica", "", 8)
-            self.multi_cell(0, 5, f"Q: {r['question']}")
+            wrapped_q = textwrap.fill(f"Q: {r['question']}", width=90)
+            self.multi_cell(0, 5, wrapped_q)
             # Truncate response for PDF
             resp_preview = r["response"][:300] + "..." if len(r["response"]) > 300 else r["response"]
-            self.multi_cell(0, 5, f"A: {resp_preview}")
+            # FPDF crashes if a single word (like a long URL) exceeds page width
+            wrapped_a = textwrap.fill(f"A: {resp_preview}", width=90)
+            self.multi_cell(0, 5, wrapped_a)
             if r.get("fail_reason"):
                 self.set_text_color(180, 0, 0)
                 self.multi_cell(0, 5, f"Fail reason: {r['fail_reason']}")
