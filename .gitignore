@@ -1,0 +1,9 @@
+.env
+data/*.db
+__pycache__/
+*.pyc
+.DS_Store
+eval_report.pdf
+*.egg-info/
+dist/
+build/
