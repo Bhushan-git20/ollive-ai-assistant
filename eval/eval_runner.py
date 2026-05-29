@@ -7,6 +7,7 @@ Generates: eval_report.pdf
 import sys
 import os
 import json
+import time
 
 # Ensure project root is in path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -79,6 +80,10 @@ def run_eval_for_model(model_name: str, questions: list) -> dict:
 
     for i, q in enumerate(questions):
         print(f"  [{i+1}/{len(questions)}] {q['id']} — {q['category']}", end=" ... ", flush=True)
+
+        # Rate limit buffer — Gemini free tier ~15 RPM
+        if model_name == "gemini-2.5-flash" and i > 0:
+            time.sleep(5)
 
         # Input guardrail first
         is_safe, _ = check_input(q["question"])
