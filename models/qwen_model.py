@@ -30,6 +30,8 @@ def generate(prompt: str, history: list[dict], tool_context: str = "") -> tuple[
     messages = [{"role": "system", "content": system_msg}]
     for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
+        
+    messages.append({"role": "user", "content": prompt})
 
     if tool_context:
         # Inject tool result before last user message
@@ -39,6 +41,7 @@ def generate(prompt: str, history: list[dict], tool_context: str = "") -> tuple[
     output = pipe(
         messages,
         max_new_tokens=512,
+        max_length=None,
         do_sample=True,
         temperature=0.7,
         top_p=0.9,
