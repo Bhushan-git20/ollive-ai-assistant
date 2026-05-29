@@ -77,6 +77,12 @@ class EvalReportPDF(FPDF):
         self.section_title(f"Detailed Results - {model_name}")
         self.set_font("Helvetica", "", 8)
 
+        def safe_wrap(prefix, text, width=80):
+            # Encode and decode ascii to remove unprintable unicode that can also crash fpdf widths
+            safe_text = str(text).encode("ascii", "ignore").decode("ascii")
+            full_text = f"{prefix}{safe_text}"
+            return "\\n".join(full_text[i:i+width] for i in range(0, len(full_text), width))
+
         for r in results:
             status_icon = "PASS" if r["passed"] else "FAIL"
             color = (0, 140, 0) if r["passed"] else (180, 0, 0)
@@ -85,16 +91,16 @@ class EvalReportPDF(FPDF):
             self.cell(0, 6, f"[{r['id']}] {r['category'].upper()} - {status_icon}", ln=True)
             self.set_text_color(0, 0, 0)
             self.set_font("Helvetica", "", 8)
-            wrapped_q = textwrap.fill(f"Q: {r['question']}", width=90)
-            self.multi_cell(0, 5, wrapped_q)
+            
+            self.multi_cell(0, 5, safe_wrap("Q: ", r['question']))
+            
             # Truncate response for PDF
             resp_preview = r["response"][:300] + "..." if len(r["response"]) > 300 else r["response"]
-            # FPDF crashes if a single word (like a long URL) exceeds page width
-            wrapped_a = textwrap.fill(f"A: {resp_preview}", width=90)
-            self.multi_cell(0, 5, wrapped_a)
+            self.multi_cell(0, 5, safe_wrap("A: ", resp_preview))
+            
             if r.get("fail_reason"):
                 self.set_text_color(180, 0, 0)
-                self.multi_cell(0, 5, f"Fail reason: {r['fail_reason']}")
+                self.multi_cell(0, 5, safe_wrap("Fail reason: ", r['fail_reason']))
                 self.set_text_color(0, 0, 0)
             self.ln(2)
 
