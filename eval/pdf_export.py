@@ -81,7 +81,7 @@ class EvalReportPDF(FPDF):
             # Encode and decode ascii to remove unprintable unicode that can also crash fpdf widths
             safe_text = str(text).encode("ascii", "ignore").decode("ascii")
             full_text = f"{prefix}{safe_text}"
-            return "\\n".join(full_text[i:i+width] for i in range(0, len(full_text), width))
+            return "\n".join(full_text[i:i+width] for i in range(0, len(full_text), width))
 
         for r in results:
             status_icon = "PASS" if r["passed"] else "FAIL"
