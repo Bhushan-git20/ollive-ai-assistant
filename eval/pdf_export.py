@@ -7,7 +7,7 @@ class EvalReportPDF(FPDF):
         self.set_font("Helvetica", "B", 13)
         self.set_fill_color(30, 30, 60)
         self.set_text_color(255, 255, 255)
-        self.cell(0, 12, "Ollive AI Assistant — Evaluation Report", ln=True, fill=True, align="C")
+        self.cell(0, 12, "Ollive AI Assistant - Evaluation Report", ln=True, fill=True, align="C")
         self.set_text_color(0, 0, 0)
         self.set_font("Helvetica", "", 9)
         self.cell(0, 7, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}", ln=True, align="C")
@@ -73,15 +73,15 @@ class EvalReportPDF(FPDF):
         self.ln(4)
 
     def detailed_results(self, model_name: str, results: list):
-        self.section_title(f"Detailed Results — {model_name}")
+        self.section_title(f"Detailed Results - {model_name}")
         self.set_font("Helvetica", "", 8)
 
         for r in results:
-            status_icon = "✓ PASS" if r["passed"] else "✗ FAIL"
+            status_icon = "PASS" if r["passed"] else "FAIL"
             color = (0, 140, 0) if r["passed"] else (180, 0, 0)
             self.set_text_color(*color)
             self.set_font("Helvetica", "B", 8)
-            self.cell(0, 6, f"[{r['id']}] {r['category'].upper()} — {status_icon}", ln=True)
+            self.cell(0, 6, f"[{r['id']}] {r['category'].upper()} - {status_icon}", ln=True)
             self.set_text_color(0, 0, 0)
             self.set_font("Helvetica", "", 8)
             self.multi_cell(0, 5, f"Q: {r['question']}")
