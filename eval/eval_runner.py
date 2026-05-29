@@ -22,7 +22,7 @@ from eval.pdf_export import generate_pdf
 QUESTIONS_PATH = os.path.join(os.path.dirname(__file__), "eval_questions.json")
 
 def load_questions():
-    with open(QUESTIONS_PATH, "r") as f:
+    with open(QUESTIONS_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def score_response(q: dict, response: str) -> tuple[bool, str]:
@@ -67,7 +67,7 @@ def run_eval_for_model(model_name: str, questions: list) -> dict:
     print(f"Evaluating: {model_name}")
     print(f"{'='*60}")
 
-    if model_name == "gemini-2.5-flash":
+    if model_name == "gemini-flash-lite-latest":
         from models.gemini_model import generate
     else:
         print("Loading Qwen model (may take 30-60s)...")
@@ -81,8 +81,8 @@ def run_eval_for_model(model_name: str, questions: list) -> dict:
     for i, q in enumerate(questions):
         print(f"  [{i+1}/{len(questions)}] {q['id']} — {q['category']}", end=" ... ", flush=True)
 
-        # Rate limit buffer — Gemini free tier ~15 RPM
-        if model_name == "gemini-2.5-flash" and i > 0:
+        # Rate limit buffer
+        if model_name == "gemini-flash-lite-latest" and i > 0:
             time.sleep(5)
 
         # Input guardrail first
@@ -135,7 +135,7 @@ def main():
     questions = load_questions()
     print(f"Loaded {len(questions)} eval questions.")
 
-    models = ["gemini-2.5-flash", "qwen2.5-0.5B"]
+    models = ["gemini-flash-lite-latest", "qwen2.5-0.5B"]
     results_by_model = {}
 
     for model in models:

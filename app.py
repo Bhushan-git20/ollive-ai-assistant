@@ -37,7 +37,7 @@ with st.sidebar:
 
     model_choice = st.radio(
         "Model",
-        options=["gemini-2.5-flash", "qwen2.5-0.5B"],
+        options=["gemini-flash-lite-latest", "qwen2.5-0.5B"],
         index=0,
         help="Gemini = frontier model (Google AI). Qwen = open-source (local).",
     )
@@ -113,7 +113,7 @@ with tab_chat:
                 with st.spinner("Thinking..."):
                     fresh_history = get_history(SESSION_ID, model_choice)
                     try:
-                        if model_choice == "gemini-2.5-flash":
+                        if model_choice == "gemini-flash-lite-latest":
                             from models.gemini_model import generate
                         else:
                             if not st.session_state.qwen_loaded:
@@ -164,7 +164,7 @@ with tab_compare:
             col1, col2 = st.columns(2)
 
             with col1:
-                st.markdown("### 🔵 Gemini 2.5 Flash")
+                st.markdown("### 🔵 Gemini Flash Lite")
                 with st.spinner("Gemini thinking..."):
                     try:
                         from models.gemini_model import generate as gemini_gen

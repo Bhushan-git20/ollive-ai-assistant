@@ -3,7 +3,7 @@ import time
 import google.generativeai as genai
 from guardrails.safety_filter import SYSTEM_SAFETY_SUFFIX
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-flash-lite-latest"
 
 def _get_client():
     api_key = os.getenv("GEMINI_API_KEY")
