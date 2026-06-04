@@ -22,6 +22,68 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Outfit', sans-serif;
+    }
+    
+    /* Background and global theme */
+    .stApp {
+        background: #0f111a;
+        color: #e2e8f0;
+    }
+    
+    /* Hide Streamlit header and footer */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: rgba(20, 24, 36, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem !important;
+        color: #00f2fe !important;
+    }
+    
+    /* Chat inputs */
+    .stChatInputContainer {
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 12px !important;
+        background: rgba(20, 24, 36, 0.9) !important;
+    }
+    
+    /* Chat Messages */
+    [data-testid="stChatMessage"] {
+        background-color: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    /* Model headers in compare */
+    h3 {
+        font-weight: 600 !important;
+        color: #e2e8f0 !important;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: rgba(20, 24, 36, 0.7);
+        border-radius: 8px;
+        padding: 5px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # ── Session state ─────────────────────────────────────────────────────────────
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())[:8]
