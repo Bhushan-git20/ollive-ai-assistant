@@ -19,6 +19,8 @@ A dual-model AI personal assistant comparing **OSS (Qwen 2.5 0.5B)** and **Front
 
 Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 
+![Ollive AI Dashboard](screenshot.png)
+
 ---
 
 ## Features
