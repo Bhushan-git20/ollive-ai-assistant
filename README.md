@@ -12,6 +12,9 @@ license: mit
 
 # Ollive AI Personal Assistant
 
+**🚀 [Try it live on Hugging Face Spaces](https://huggingface.co/spaces/bhushan-git20/ollive-ai-assistant)**
+
+
 A dual-model AI personal assistant comparing **OSS (Qwen 2.5 0.5B)** and **Frontier (Gemini 2.5 Flash)** models with a structured evaluation framework.
 
 Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
