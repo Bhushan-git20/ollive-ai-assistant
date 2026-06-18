@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Activity, ShieldAlert, Cpu, Zap } from "lucide-react";
+import { Activity, ShieldAlert, Cpu, Zap, Play, Terminal } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 export default function EvalDashboard() {
   const [stats, setStats] = useState<any[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [logs, setLogs] = useState<string>("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -15,9 +18,8 @@ export default function EvalDashboard() {
         const res = await fetch("http://localhost:8000/api/stats");
         if (res.ok) {
           const data = await res.json();
-          // The API returns an array of stats objects directly
           const statsArray = data.stats.map((row: any) => ({
-            model: row.model,
+            name: row.model,
             requests: row.requests,
             latency: row.avg_latency_ms,
             tokens: (row.total_prompt_tokens || 0) + (row.total_completion_tokens || 0),
@@ -32,14 +34,62 @@ export default function EvalDashboard() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/eval/logs");
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.logs);
+          setIsRunning(data.is_running);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    if (isRunning) {
+      interval = setInterval(fetchLogs, 2000);
+    } else {
+      fetchLogs(); // one last fetch
+    }
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+  const handleRunEval = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/eval/run", { method: "POST" });
+      if (res.ok) {
+        setIsRunning(true);
+        setLogs("Starting Evaluation Runner...\n");
+      }
+    } catch (err) {
+      console.error("Failed to start eval", err);
+    }
+  };
+
+  const totalRequests = stats.reduce((acc, curr) => acc + curr.requests, 0);
+  const avgLat = stats.length ? Math.round(stats.reduce((acc, curr) => acc + curr.latency, 0) / stats.length) : 0;
+  const totalToks = stats.reduce((acc, curr) => acc + curr.tokens, 0);
+  const totalBlocks = stats.reduce((acc, curr) => acc + curr.blocked, 0);
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Evaluation Dashboard</h2>
+        <Button onClick={handleRunEval} disabled={isRunning} className="gap-2">
+          {isRunning ? <Terminal className="h-4 w-4 animate-pulse" /> : <Play className="h-4 w-4" />}
+          {isRunning ? "Running Eval..." : "Run Evaluation Suite"}
+        </Button>
+      </div>
+
       <div className="grid grid-cols-4 gap-4">
         {[
-          { title: "Total Requests", value: "60", icon: Activity, color: "text-blue-400" },
-          { title: "Avg Latency", value: "580ms", icon: Zap, color: "text-yellow-400" },
-          { title: "Total Tokens", value: "16.2k", icon: Cpu, color: "text-purple-400" },
-          { title: "Guardrail Blocks", value: "2", icon: ShieldAlert, color: "text-destructive" },
+          { title: "Total Requests", value: totalRequests.toString(), icon: Activity, color: "text-blue-400" },
+          { title: "Avg Latency", value: `${avgLat}ms`, icon: Zap, color: "text-yellow-400" },
+          { title: "Total Tokens", value: totalToks.toLocaleString(), icon: Cpu, color: "text-purple-400" },
+          { title: "Guardrail Blocks", value: totalBlocks.toString(), icon: ShieldAlert, color: "text-destructive" },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -47,7 +97,7 @@ export default function EvalDashboard() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.1 }}
           >
-            <Card className="p-4 bg-card/40 backdrop-blur border-border/50">
+            <Card className="p-4 bg-card/40 backdrop-blur border-border/50 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
@@ -58,45 +108,49 @@ export default function EvalDashboard() {
         ))}
       </div>
 
-      <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden">
-        <div className="p-6 border-b border-border/50">
-          <h3 className="text-lg font-semibold tracking-tight">Model Performance Analytics</h3>
-          <p className="text-sm text-muted-foreground">Aggregated metrics from the SQLite observability logger.</p>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead>Model</TableHead>
-              <TableHead className="text-right">Requests</TableHead>
-              <TableHead className="text-right">Avg Latency</TableHead>
-              <TableHead className="text-right">Total Tokens</TableHead>
-              <TableHead className="text-right">Guardrail Hits</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {stats.map((row, i) => (
-              <TableRow key={i} className="hover:bg-muted/20 transition-colors">
-                <TableCell className="font-medium flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${row.model.includes("gemini") ? "bg-blue-500" : "bg-green-500"}`} />
-                  {row.model}
-                </TableCell>
-                <TableCell className="text-right">{row.requests}</TableCell>
-                <TableCell className="text-right font-mono text-xs">{row.latency}ms</TableCell>
-                <TableCell className="text-right font-mono text-xs">{row.tokens.toLocaleString()}</TableCell>
-                <TableCell className="text-right">
-                  {row.blocked > 0 ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">
-                      {row.blocked}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      {(logs || isRunning) && (
+        <Card className="bg-black border-border/50 overflow-hidden font-mono text-xs text-green-400 p-4 h-64 overflow-y-auto">
+          <pre className="whitespace-pre-wrap">{logs}</pre>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-2 gap-6">
+        <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
+          <h3 className="text-lg font-semibold tracking-tight mb-6">Latency Comparison (ms)</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <Tooltip 
+                  cursor={{ fill: 'currentColor', opacity: 0.05 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                />
+                <Bar dataKey="latency" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={60} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
+          <h3 className="text-lg font-semibold tracking-tight mb-6">Token Usage Comparison</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <Tooltip 
+                  cursor={{ fill: 'currentColor', opacity: 0.05 }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                />
+                <Bar dataKey="tokens" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

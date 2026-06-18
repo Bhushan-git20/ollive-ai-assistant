@@ -180,12 +180,13 @@ with tab_chat:
                         else:
                             if not st.session_state.qwen_loaded:
                                 st.info("Loading Qwen model (first time only, ~30 seconds)...")
-                                st.session_state.qwen_loaded = True
                             from models.qwen_model import generate
 
                         response, p_tok, c_tok, latency = generate(
                             user_input, fresh_history, tool_context=tool_result or ""
                         )
+                        if model_choice != "gemini-flash-lite-latest":
+                            st.session_state.qwen_loaded = True
                     except Exception as e:
                         response = f"⚠️ Model error: {e}"
                         p_tok, c_tok, latency = 0, 0, 0.0

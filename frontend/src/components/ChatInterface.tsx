@@ -4,22 +4,25 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, ShieldAlert, Wrench } from "lucide-react";
+import { Send, Bot, User, ShieldAlert, Wrench, ThumbsUp, ThumbsDown, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
+  id?: number;
   role: "user" | "assistant";
   content: string;
   latency?: number;
   tokens?: number;
   tool_used?: string | null;
   guardrail_triggered?: boolean;
+  rating?: number;
 }
 
-export default function ChatInterface({ activeModel }: { activeModel: string }) {
+export default function ChatInterface({ activeModel, systemPrompt }: { activeModel: string, systemPrompt?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // Hardcoded session ID for simplicity
@@ -34,8 +37,10 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
           const data = await res.json();
           // Transform history to match Message interface
           const formatted = data.history.map((msg: any) => ({
+            id: msg.id,
             role: msg.role,
-            content: msg.content
+            content: msg.content,
+            rating: msg.rating
           }));
           setMessages(formatted);
         }
@@ -53,38 +58,130 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
     }
   }, [messages]);
 
-  const handleSubmit = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleRate = async (messageId: number, rating: number, index: number) => {
+    // Optimistic update
+    setMessages(prev => {
+      const newMsgs = [...prev];
+      newMsgs[index] = { ...newMsgs[index], rating };
+      return newMsgs;
+    });
 
-    const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    try {
+      await fetch(`http://localhost:8000/api/rate/${messageId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating })
+      });
+    } catch (err) {
+      console.error("Failed to rate message", err);
+    }
+  };
+
+  const handleCopy = (content: string, index: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(index);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSubmit = async (overrideInput?: string) => {
+    const textToSubmit = overrideInput || input;
+    if (!textToSubmit.trim() || isLoading) return;
+
+    const userMessage: Message = { role: "user", content: textToSubmit };
+    
+    setMessages((prev) => [...prev, userMessage, { role: "assistant", content: "" }]);
+    if (!overrideInput) setInput("");
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/chat", {
+      const res = await fetch("http://localhost:8000/api/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionId,
           model: activeModel,
-          message: userMessage.content
+          message: textToSubmit,
+          system_prompt: systemPrompt
         })
       });
       
-      if (res.ok) {
-        const data = await res.json();
-        setMessages((prev) => [...prev, data]);
-      } else {
-        setMessages((prev) => [...prev, { role: "assistant", content: "Error connecting to backend." }]);
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      setIsLoading(false);
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      if (reader) {
+        let done = false;
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) {
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.replace('data: ', '');
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.error) {
+                    setMessages(prev => {
+                      const newMsgs = [...prev];
+                      newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], content: "Error: " + data.error };
+                      return newMsgs;
+                    });
+                    break;
+                  }
+                  
+                  if (data.is_done) {
+                     if (data.message_id) {
+                       setMessages(prev => {
+                         const newMsgs = [...prev];
+                         newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], id: data.message_id };
+                         return newMsgs;
+                       });
+                     }
+                     break;
+                  }
+
+                  setMessages(prev => {
+                    const newMsgs = [...prev];
+                    const currentAssistant = newMsgs[newMsgs.length - 1];
+                    newMsgs[newMsgs.length - 1] = {
+                      ...currentAssistant,
+                      content: currentAssistant.content + data.content,
+                      tool_used: data.tool_used || currentAssistant.tool_used,
+                    };
+                    return newMsgs;
+                  });
+                } catch (e) {
+                  // Ignore JSON parse errors for incomplete chunks
+                }
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Failed to fetch from backend." }]);
-    } finally {
+      setMessages(prev => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], content: "Failed to fetch from backend." };
+        return newMsgs;
+      });
       setIsLoading(false);
     }
   };
+
+  const templates = [
+    "Explain quantum physics simply",
+    "Write a Python script for a scraper",
+    "What is the date today?",
+    "Calculate 24 * 365"
+  ];
 
   return (
     <div className="flex flex-col h-full bg-card/30 border border-border/50 rounded-2xl overflow-hidden shadow-sm">
@@ -94,6 +191,17 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
             <div className="h-[40vh] flex flex-col items-center justify-center text-muted-foreground opacity-60">
               <Bot className="h-12 w-12 mb-4" />
               <p>Ask {activeModel} anything...</p>
+              <div className="grid grid-cols-2 gap-2 mt-6">
+                {templates.map((tpl, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => handleSubmit(tpl)}
+                    className="px-4 py-2 border border-border/50 rounded-lg text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    {tpl}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -112,7 +220,7 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
                 </div>
                 
                 <div className={`flex flex-col max-w-[80%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                  <div className={`px-5 py-3.5 rounded-2xl ${
+                  <div className={`px-5 py-3.5 rounded-2xl whitespace-pre-wrap ${
                     msg.role === "user" 
                       ? "bg-primary text-primary-foreground rounded-tr-sm" 
                       : msg.guardrail_triggered 
@@ -124,7 +232,7 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
                   
                   {/* Metadata tags */}
                   {msg.role === "assistant" && (
-                    <div className="flex flex-wrap gap-2 mt-2 ml-1">
+                    <div className="flex flex-wrap gap-2 mt-2 ml-1 items-center">
                       {msg.latency && (
                         <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                           ⏱ {msg.latency.toFixed(0)}ms
@@ -145,6 +253,30 @@ export default function ChatInterface({ activeModel }: { activeModel: string }) 
                           <ShieldAlert className="h-3 w-3" /> Blocked
                         </span>
                       )}
+                      <div className="flex gap-1 ml-2">
+                        {msg.id && (
+                          <>
+                            <button 
+                              onClick={() => handleRate(msg.id!, 1, i)}
+                              className={`p-1 rounded hover:bg-muted transition-colors ${msg.rating === 1 ? 'text-green-500' : 'text-muted-foreground'}`}
+                            >
+                              <ThumbsUp className="h-3 w-3" />
+                            </button>
+                            <button 
+                              onClick={() => handleRate(msg.id!, -1, i)}
+                              className={`p-1 rounded hover:bg-muted transition-colors ${msg.rating === -1 ? 'text-red-500' : 'text-muted-foreground'}`}
+                            >
+                              <ThumbsDown className="h-3 w-3" />
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={() => handleCopy(msg.content, i)}
+                          className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground ml-1"
+                        >
+                          {copiedId === i ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

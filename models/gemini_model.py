@@ -2,48 +2,82 @@ import os
 import time
 import google.generativeai as genai
 from guardrails.safety_filter import SYSTEM_SAFETY_SUFFIX
+from typing import List, Dict, Any
 
-MODEL_NAME = "gemini-flash-lite-latest"
+MODEL_NAME = "gemini-2.5-flash"
+_client = None
 
 def _get_client():
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not set. Add it to your .env file.")
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel(
-        model_name=MODEL_NAME,
-        system_instruction=f"You are a helpful personal AI assistant.{SYSTEM_SAFETY_SUFFIX}"
-    )
+    global _client
+    if _client is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not set. Add it to your .env file.")
+        genai.configure(api_key=api_key)
+        _client = genai
+    return _client
 
-def generate(prompt: str, history: list[dict], tool_context: str = "") -> tuple[str, int, int, float]:
-    """
-    Generate a response using Gemini 2.5 Flash.
-    Returns: (response_text, prompt_tokens, completion_tokens, latency_ms)
-    """
-    model = _get_client()
-
-    # Build Gemini-format history
-    gemini_history = []
-    for msg in history[:-1]:  # exclude last (current user message)
-        gemini_history.append({
-            "role": "user" if msg["role"] == "user" else "model",
-            "parts": [msg["content"]]
-        })
-
-    full_prompt = prompt
+def generate(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None) -> tuple[str, int, int, float]:
+    start_time = time.time()
+    
+    # Prepend tool context to prompt if available
     if tool_context:
-        full_prompt = f"[Tool result: {tool_context}]\n\nUser question: {prompt}"
+        prompt = f"[Tool Output: {tool_context}]\n\n{prompt}"
 
-    chat = model.start_chat(history=gemini_history)
+    base_system = system_prompt if system_prompt else ""
+    full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
 
-    start = time.time()
-    response = chat.send_message(full_prompt)
-    latency_ms = (time.time() - start) * 1000
+    messages = [{"role": "system", "content": full_system}]
+    for msg in history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": prompt})
 
-    text = response.text
-    # Gemini usage metadata
-    usage = getattr(response, "usage_metadata", None)
-    prompt_tokens = getattr(usage, "prompt_token_count", len(prompt.split()))
-    completion_tokens = getattr(usage, "candidates_token_count", len(text.split()))
+    client = _get_client()
+    
+    # Safe fallback: prepend to the first user message
+    gemini_messages = []
+    for m in messages:
+        if m["role"] == "system":
+            # Just append it to the next user message to be safe across gemini versions
+            gemini_messages.append({"role": "user", "parts": [{"text": f"System Instruction: {m['content']}"}]})
+            gemini_messages.append({"role": "model", "parts": [{"text": "Understood."}]})
+        else:
+            role = "model" if m["role"] == "assistant" else "user"
+            gemini_messages.append({"role": role, "parts": [{"text": m["content"]}]})
 
-    return text, prompt_tokens, completion_tokens, latency_ms
+    model = client.GenerativeModel("gemini-2.5-flash") # Using latest available fallback
+    
+    response = model.generate_content(gemini_messages)
+    
+    latency = (time.time() - start_time) * 1000
+    p_tokens = model.count_tokens(gemini_messages).total_tokens if hasattr(model, 'count_tokens') else 0
+    c_tokens = model.count_tokens(response.text).total_tokens if hasattr(model, 'count_tokens') else 0
+    
+    return response.text, p_tokens, c_tokens, latency
+
+def generate_stream(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None):
+    if tool_context:
+        prompt = f"[Tool Output: {tool_context}]\n\n{prompt}"
+
+    base_system = system_prompt if system_prompt else ""
+    full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
+
+    client = _get_client()
+    
+    gemini_messages = []
+    gemini_messages.append({"role": "user", "parts": [{"text": f"System Instruction: {full_system}"}]})
+    gemini_messages.append({"role": "model", "parts": [{"text": "Understood."}]})
+    
+    for msg in history:
+        role = "model" if msg["role"] == "assistant" else "user"
+        gemini_messages.append({"role": role, "parts": [{"text": msg["content"]}]})
+        
+    gemini_messages.append({"role": "user", "parts": [{"text": prompt}]})
+
+    model = client.GenerativeModel("gemini-2.5-flash")
+    
+    response_stream = model.generate_content(gemini_messages, stream=True)
+    
+    for chunk in response_stream:
+        if chunk.text:
+            yield chunk.text

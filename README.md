@@ -30,10 +30,11 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 | **Dual models** | Qwen2.5-0.5B-Instruct (OSS) + Gemini 2.5 Flash (frontier) |
 | **Model toggle** | Switch mid-conversation; separate memory per model |
 | **Persistent memory** | SQLite per session — retains context across turns |
-| **Tool use** | Calculator (safe AST eval) + Datetime (UTC/IST) |
+| **Web Search** | DuckDuckGo live web search integration |
+| **Tool use** | Calculator (safe AST eval) + Datetime (UTC/IST) + DuckDuckGo |
 | **Guardrails** | Input + output safety filter, regex-based keyword blocking |
-| **Observability** | Logs latency, token counts, guardrail hits per request |
-| **Eval suite** | 30 questions across hallucination / bias / safety categories |
+| **Observability** | Visual Recharts dashboard tracking latency, tokens, and guardrail hits |
+| **Eval suite** | Live in-app Eval Runner + 30 questions across hallucination/bias/safety |
 | **PDF report** | Auto-generated eval report with category breakdown |
 | **Compare tab** | Side-by-side response comparison with cost/latency |
 

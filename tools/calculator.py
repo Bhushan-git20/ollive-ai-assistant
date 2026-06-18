@@ -14,7 +14,7 @@ _OPERATORS = {
 
 def _safe_eval(node):
     if isinstance(node, ast.Constant):
-        return node.n
+        return node.value
     elif isinstance(node, ast.BinOp):
         left = _safe_eval(node.left)
         right = _safe_eval(node.right)
@@ -51,5 +51,5 @@ def calculate(expression: str) -> str:
 TOOL_DEFINITION = {
     "name": "calculator",
     "description": "Evaluate a mathematical expression. Input must be a plain math expression like '2 + 2' or '(10 * 3) / 2'.",
-    "trigger_keywords": ["calculate", "compute", "what is", "solve", "math", "+", "-", "*", "/", "^", "%"],
+    "trigger_keywords": ["calculate", "compute", "solve", "math", "+", "-", "*", "/", "^", "%"],
 }

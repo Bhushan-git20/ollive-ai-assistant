@@ -22,32 +22,48 @@ def init_db():
             timestamp TEXT NOT NULL
         )
     """)
+    # Add rating column if missing (SQLite ALTER TABLE)
+    try:
+        conn.execute("ALTER TABLE chat_history ADD COLUMN rating INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass # Column already exists
     conn.commit()
     conn.close()
 
-def save_message(session_id: str, model: str, role: str, content: str):
+def save_message(session_id: str, model: str, role: str, content: str) -> int:
     conn = get_connection()
-    conn.execute(
-        "INSERT INTO chat_history (session_id, model, role, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+    cursor = conn.execute(
+        "INSERT INTO chat_history (session_id, model, role, content, timestamp, rating) VALUES (?, ?, ?, ?, ?, 0)",
         (session_id, model, role, content, datetime.utcnow().isoformat())
     )
     conn.commit()
+    inserted_id = cursor.lastrowid
     conn.close()
+    return inserted_id
 
 def get_history(session_id: str, model: str, limit: int = 20) -> list[dict]:
     conn = get_connection()
     rows = conn.execute(
-        "SELECT role, content FROM chat_history WHERE session_id=? AND model=? ORDER BY id DESC LIMIT ?",
+        "SELECT id, role, content, rating FROM chat_history WHERE session_id=? AND model=? ORDER BY id DESC LIMIT ?",
         (session_id, model, limit)
     ).fetchall()
     conn.close()
-    return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+    return [{"id": r["id"], "role": r["role"], "content": r["content"], "rating": r["rating"]} for r in reversed(rows)]
 
 def clear_history(session_id: str, model: str):
     conn = get_connection()
     conn.execute(
         "DELETE FROM chat_history WHERE session_id=? AND model=?",
         (session_id, model)
+    )
+    conn.commit()
+    conn.close()
+
+def rate_message(message_id: int, rating: int):
+    conn = get_connection()
+    conn.execute(
+        "UPDATE chat_history SET rating=? WHERE id=?",
+        (rating, message_id)
     )
     conn.commit()
     conn.close()

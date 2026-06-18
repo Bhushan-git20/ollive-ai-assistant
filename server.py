@@ -31,6 +31,7 @@ class ChatRequest(BaseModel):
     session_id: str
     model: str
     message: str
+    system_prompt: Optional[str] = None
 
 class CompareRequest(BaseModel):
     session_id: str
@@ -60,6 +61,7 @@ def chat(request: ChatRequest):
     user_input = request.message
     session_id = request.session_id
     model_choice = request.model
+    system_prompt = request.system_prompt
 
     # Guardrail check on input
     is_safe, reason = check_input(user_input)
@@ -88,7 +90,7 @@ def chat(request: ChatRequest):
             from models.qwen_model import generate
 
         response, p_tok, c_tok, latency = generate(
-            user_input, fresh_history, tool_context=tool_result or ""
+            user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt
         )
     except Exception as e:
         response = f"⚠️ Model error: {e}"
@@ -112,6 +114,110 @@ def chat(request: ChatRequest):
         "tool_used": f"{tool_name} -> {tool_result}" if tool_result else None,
         "guardrail_triggered": not out_safe
     }
+
+from fastapi.responses import StreamingResponse
+import json
+import subprocess
+import os
+import sys
+
+@app.post("/api/chat/stream")
+def chat_stream(request: ChatRequest):
+    user_input = request.message
+    session_id = request.session_id
+    model_choice = request.model
+    system_prompt = request.system_prompt
+
+    is_safe, reason = check_input(user_input)
+    if not is_safe:
+        def err_stream():
+            yield f"data: {json.dumps({'content': f'🚫 {reason}', 'tool_used': None})}\n\n"
+        return StreamingResponse(err_stream(), media_type="text/event-stream")
+
+    user_msg_id = save_message(session_id, model_choice, "user", user_input)
+    tool_name, tool_result = route_tool(user_input)
+    fresh_history = get_history(session_id, model_choice)
+
+    def generate_responses():
+        tool_str = f"{tool_name} -> {tool_result}" if tool_result else None
+        
+        try:
+            if model_choice == "gemini-flash-lite-latest" or "gemini" in model_choice:
+                from models.gemini_model import generate_stream
+                stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
+            else:
+                from models.qwen_model import generate_stream
+                stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
+
+            full_response = ""
+            for chunk in stream:
+                full_response += chunk
+                payload = {
+                    "content": chunk,
+                    "tool_used": tool_str,
+                    "is_done": False
+                }
+                yield f"data: {json.dumps(payload)}\n\n"
+            
+            # Post generation check
+            out_safe, out_reason = check_output(full_response)
+            if not out_safe:
+                yield f"data: {json.dumps({'content': f'\\n\\n🚫 {out_reason}', 'is_done': False})}\n\n"
+            
+            # Save assistant message and get ID
+            msg_id = save_message(session_id, model_choice, "assistant", full_response)
+            log_request(session_id, model_choice, len(user_input.split()), len(full_response.split()), 0.0, tool_used=tool_name)
+
+            yield f"data: {json.dumps({'content': '', 'is_done': True, 'message_id': msg_id})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(generate_responses(), media_type="text/event-stream")
+
+class RateRequest(BaseModel):
+    rating: int
+
+@app.post("/api/rate/{message_id}")
+def rate(message_id: int, req: RateRequest):
+    from memory.sqlite_memory import rate_message
+    rate_message(message_id, req.rating)
+    return {"status": "success"}
+
+# --- EVAL RUNNER ---
+eval_process = None
+
+@app.post("/api/eval/run")
+def run_eval():
+    global eval_process
+    if eval_process and eval_process.poll() is None:
+        return {"status": "already_running"}
+    
+    # Run the eval script in the background
+    script_path = os.path.join(os.path.dirname(__file__), "eval", "eval_runner.py")
+    log_path = os.path.join(os.path.dirname(__file__), "eval", "eval_logs.txt")
+    
+    with open(log_path, "w") as f:
+        f.write("Starting Evaluation Runner...\n")
+
+    eval_process = subprocess.Popen(
+        [sys.executable, script_path],
+        stdout=open(log_path, "a"),
+        stderr=subprocess.STDOUT
+    )
+    return {"status": "started"}
+
+@app.get("/api/eval/logs")
+def get_eval_logs():
+    global eval_process
+    log_path = os.path.join(os.path.dirname(__file__), "eval", "eval_logs.txt")
+    logs = ""
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8") as f:
+            logs = f.read()
+    
+    is_running = eval_process is not None and eval_process.poll() is None
+    return {"logs": logs, "is_running": is_running}
 
 @app.post("/api/compare")
 def compare(request: CompareRequest):

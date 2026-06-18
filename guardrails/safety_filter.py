@@ -2,7 +2,7 @@ import re
 
 # Hard-block patterns — expand as needed
 _BLOCKED_PATTERNS = [
-    r"\b(how to (make|build|create|synthesize) (a |an )?(bomb|weapon|explosive|poison|drug))\b",
+    r"\b(how (to|do i) (make|build|create|synthesize) (a |an )?(bomb|weapon|explosive|poison|drug))\b",
     r"\b(kill (yourself|myself|himself|herself))\b",
     r"\b(suicide (method|plan|how))\b",
     r"\b(child (porn|abuse|exploit))\b",

@@ -17,5 +17,5 @@ def get_datetime_info(query: str = "") -> str:
 TOOL_DEFINITION = {
     "name": "datetime",
     "description": "Get the current date and time in UTC and IST.",
-    "trigger_keywords": ["date", "time", "today", "now", "day", "year", "month", "when"],
+    "trigger_keywords": ["date", "time", "today", "now"],
 }
