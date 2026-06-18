@@ -45,12 +45,17 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 git clone https://github.com/Bhushan-git20/ollive-ai-assistant
 cd ollive-ai-assistant
 
+# 1. Setup Backend (FastAPI)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
 cp .env.example .env
-# Add your GEMINI_API_KEY to .env
+uvicorn server:app --reload
 
-streamlit run app.py
+# 2. Setup Frontend (Next.js) - in a new terminal
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
@@ -83,7 +88,8 @@ The evaluation suite has been recently updated to ensure proper parsing of unbia
 ## Architecture
 
 ```
-app.py                    ← Streamlit UI (Chat / Compare / Eval tabs)
+frontend/                 ← Next.js (React) UI with Shadcn and TailwindCSS
+server.py                 ← FastAPI Backend serving API endpoints
 models/
   gemini_model.py         ← Gemini 2.5 Flash via google-generativeai
   qwen_model.py           ← Qwen2.5-0.5B via HuggingFace transformers
@@ -115,5 +121,6 @@ eval/
 
 ## Stack
 
-Python · Streamlit · HuggingFace Transformers · Google Generative AI · SQLite · FPDF2 · python-dotenv
+**Frontend:** Next.js (App Router) · React · Tailwind CSS · Shadcn UI · Framer Motion
+**Backend:** Python · FastAPI · HuggingFace Transformers · Google Generative AI · SQLite · FPDF2
 
