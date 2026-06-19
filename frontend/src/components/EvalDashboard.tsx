@@ -145,7 +145,7 @@ export default function EvalDashboard() {
                   cursor={{ fill: 'currentColor', opacity: 0.05 }}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                 />
-                <Bar dataKey="tokens" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="tokens" fill="#eab308" radius={[4, 4, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
