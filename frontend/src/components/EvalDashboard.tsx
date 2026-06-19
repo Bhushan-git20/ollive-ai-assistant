@@ -77,8 +77,8 @@ export default function EvalDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Evaluation Dashboard</h2>
-        <Button onClick={handleRunEval} disabled={isRunning} className="gap-2">
+        <h2 className="text-2xl font-semibold text-yellow-500">Evaluation Dashboard</h2>
+        <Button onClick={handleRunEval} disabled={isRunning} className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
           {isRunning ? <Terminal className="h-4 w-4 animate-pulse" /> : <Play className="h-4 w-4" />}
           {isRunning ? "Running Eval..." : "Run Evaluation Suite"}
         </Button>
@@ -116,7 +116,7 @@ export default function EvalDashboard() {
 
       <div className="grid grid-cols-2 gap-6">
         <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
-          <h3 className="text-lg font-semibold tracking-tight mb-6">Latency Comparison (ms)</h3>
+          <h3 className="text-lg font-semibold tracking-tight mb-6 text-yellow-500">Latency Comparison (ms)</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -127,14 +127,14 @@ export default function EvalDashboard() {
                   cursor={{ fill: 'currentColor', opacity: 0.05 }}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                 />
-                <Bar dataKey="latency" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                <Bar dataKey="latency" fill="#eab308" radius={[4, 4, 0, 0]} maxBarSize={60} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
-          <h3 className="text-lg font-semibold tracking-tight mb-6">Token Usage Comparison</h3>
+          <h3 className="text-lg font-semibold tracking-tight mb-6 text-yellow-500">Token Usage Comparison</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

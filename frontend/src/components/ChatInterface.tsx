@@ -176,12 +176,25 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
     }
   };
 
-  const templates = [
+  const allTemplates = [
     "Explain quantum physics simply",
     "Write a Python script for a scraper",
     "What is the date today?",
-    "Calculate 24 * 365"
+    "Calculate 24 * 365",
+    "How do neural networks work?",
+    "Write a haiku about the ocean",
+    "What's a good recipe for pancakes?",
+    "Translate 'Good morning' to Spanish",
+    "Summarize the theory of relativity",
+    "Write a SQL query to join two tables"
   ];
+
+  const [displayTemplates, setDisplayTemplates] = useState<string[]>([]);
+
+  useEffect(() => {
+    const shuffled = [...allTemplates].sort(() => 0.5 - Math.random());
+    setDisplayTemplates(shuffled.slice(0, 4));
+  }, [activeModel]);
 
   return (
     <div className="flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden shadow-lg">
@@ -192,11 +205,11 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
               <Bot className="h-12 w-12 mb-4" />
               <p className="font-heading text-2xl tracking-widest text-primary uppercase">Ask {activeModel} anything...</p>
               <div className="grid grid-cols-2 gap-2 mt-6">
-                {templates.map((tpl, idx) => (
+                {displayTemplates.map((tpl, idx) => (
                   <button 
                     key={idx}
                     onClick={() => handleSubmit(tpl)}
-                    className="px-4 py-2 border border-border rounded-lg text-xs font-semibold tracking-wider hover:border-primary hover:text-primary transition-colors"
+                    className="px-4 py-2 border border-red-500/50 text-red-500 rounded-lg text-xs font-semibold tracking-wider hover:bg-red-500 hover:text-white transition-colors"
                   >
                     {tpl}
                   </button>
