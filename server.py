@@ -21,7 +21,8 @@ app = FastAPI(title="Ollive AI Assistant API")
 # Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost:8000"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -149,13 +150,7 @@ def chat_stream(request: ChatRequest):
                 stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
 
             full_response = ""
-            first_chunk = True
             for chunk in stream:
-                if first_chunk:
-                    save_message(session_id, model_choice, "user", user_input)
-                    user_msg_saved = True
-                    first_chunk = False
-                    
                 full_response += chunk
                 payload = {
                     "content": chunk,
@@ -169,7 +164,8 @@ def chat_stream(request: ChatRequest):
             if not out_safe:
                 yield f"data: {json.dumps({'content': f'\\n\\n🚫 {out_reason}', 'is_done': False})}\n\n"
             
-            # Save assistant message and get ID
+            # Save BOTH user and assistant messages at the end to prevent corruption on crash
+            save_message(session_id, model_choice, "user", user_input)
             msg_id = save_message(session_id, model_choice, "assistant", full_response)
             log_request(session_id, model_choice, len(user_input.split()), len(full_response.split()), 0.0, tool_used=tool_name)
 
