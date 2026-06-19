@@ -44,19 +44,20 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 git clone https://github.com/Bhushan-git20/ollive-ai-assistant
 cd ollive-ai-assistant
 
-# 1. Setup Backend (FastAPI)
+# 1. Setup Environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 cp .env.example .env
-uvicorn server:app --reload
 
-# 2. Setup Frontend (Next.js) - in a new terminal
+# 2. Setup Frontend
 cd frontend
 npm install
-npm run dev
-```
+cd ..
 
+# 3. Run the Project
+python start.py
+```
 ---
 
 ## Run Eval
