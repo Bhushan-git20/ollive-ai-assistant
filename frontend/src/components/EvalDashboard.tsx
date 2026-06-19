@@ -121,8 +121,8 @@ export default function EvalDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
-                <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#ef4444' }} className="opacity-70" />
+                <YAxis tick={{ fontSize: 12, fill: '#ef4444' }} className="opacity-70" />
                 <Tooltip 
                   cursor={{ fill: 'currentColor', opacity: 0.05 }}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
@@ -139,8 +139,8 @@ export default function EvalDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
-                <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="opacity-70" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#ef4444' }} className="opacity-70" />
+                <YAxis tick={{ fontSize: 12, fill: '#ef4444' }} className="opacity-70" />
                 <Tooltip 
                   cursor={{ fill: 'currentColor', opacity: 0.05 }}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}

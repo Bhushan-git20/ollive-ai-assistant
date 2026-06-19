@@ -39,7 +39,7 @@ export default function Home() {
 
         <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-3">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
+            <h2 className="text-xs font-medium text-yellow-500 uppercase tracking-wider px-2">
               Active Model
             </h2>
             <div className="flex flex-col gap-2">
@@ -69,7 +69,7 @@ export default function Home() {
           </div>
           
           <div className="space-y-3 pt-4 border-t border-border/30">
-             <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">
+             <h2 className="text-xs font-medium text-blue-500 uppercase tracking-wider px-2">
               System Prompt
             </h2>
             <Textarea 
@@ -93,7 +93,7 @@ export default function Home() {
         </div>
 
         <div className="mt-auto pt-4 border-t border-border/30 space-y-4">
-          <div className="px-2 py-3 bg-muted/30 rounded-lg text-xs text-muted-foreground space-y-1 border border-border/50">
+          <div className="px-2 py-3 bg-muted/30 rounded-lg text-xs text-yellow-500 space-y-1 border border-border/50">
             <p className="flex items-center gap-1.5"><Settings2 className="h-3 w-3"/> Tools Active</p>
             <p>• Calculator</p>
             <p>• Datetime</p>
