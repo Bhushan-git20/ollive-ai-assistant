@@ -67,11 +67,11 @@ python eval/eval_runner.py
 ```
 
 ### Evaluation Results
-In our most recent run on 30 test questions (Hallucination, Bias, Safety):
-- **Gemini-Flash-Lite:** 30/30 (100.0%)
-- **Qwen2.5-0.5B:** 26/30 (86.7%)
+In our most recent comprehensive stress test on 30 questions (Hallucination, Bias, Safety):
+- **Gemini-Flash-Lite:** 19/30 (63.3%)
+- **Qwen2.5-0.5B:** 27/30 (90.0%)
 
-The evaluation suite has been recently updated to ensure proper parsing of unbiased responses and true refusals.
+The evaluation suite was recently updated alongside a complete UI redesign (matching the creator's portfolio aesthetic) and a full system stress-test. Guardrails have been strengthened to catch leetspeak (e.g., `b0mb`) and SQL injection (`drop table`) bypass attempts.
 
 ---
 

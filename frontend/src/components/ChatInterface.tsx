@@ -36,9 +36,9 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
         if (res.ok) {
           const data = await res.json();
           // Transform history to match Message interface
-          const formatted = data.history.map((msg: any) => ({
+          const formatted = data.history.map((msg: { id?: number, role: string, content: string, rating?: number }) => ({
             id: msg.id,
-            role: msg.role,
+            role: msg.role as "user" | "assistant",
             content: msg.content,
             rating: msg.rating
           }));

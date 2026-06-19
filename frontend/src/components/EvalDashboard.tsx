@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 
 export default function EvalDashboard() {
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<{name: string, requests: number, latency: number, tokens: number, blocked: number}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string>("");
 
@@ -18,7 +18,7 @@ export default function EvalDashboard() {
         const res = await fetch("http://localhost:8000/api/stats");
         if (res.ok) {
           const data = await res.json();
-          const statsArray = data.stats.map((row: any) => ({
+          const statsArray = data.stats.map((row: { model: string, requests: number, avg_latency_ms: number, total_prompt_tokens?: number, total_completion_tokens?: number, guardrail_hits: number }) => ({
             name: row.model,
             requests: row.requests,
             latency: row.avg_latency_ms,

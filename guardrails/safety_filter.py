@@ -3,7 +3,7 @@ import re
 # Hard-block patterns — expand as needed
 _BLOCKED_PATTERNS = [
     # Expand to catch all common phrasings of harmful requests
-    r"\b(how (to|do I|can I|would I|do you) (make|build|create|synthesize) (a |an )?(bomb|weapon|explosive|poison|drug))\b",
+    r"\b(how (to|do I|can I|would I|do you) (make|build|create|synthesize) (a |an )?(b[o0]mb|weapon|explosive|p[o0]is[o0]n|drug))\b",
     r"\b(kill (yourself|myself|himself|herself))\b",
     r"\b(suicide (method|plan|how))\b",
     r"\b(child (porn|abuse|exploit))\b",
@@ -12,6 +12,7 @@ _BLOCKED_PATTERNS = [
     r"\bignore (all )?(previous |prior )?(instructions?|prompt)\b",
     r"\byou are now (dan|an? (unrestricted|unfiltered|evil))\b",
     r"\bact as (an? )?(unrestricted|unfiltered|evil|dan)\b",
+    r"\b(drop|alter|delete|truncate)\s+(table|database)\b", # Basic SQLi
 ]
 
 _COMPILED = [re.compile(p, re.IGNORECASE) for p in _BLOCKED_PATTERNS]
