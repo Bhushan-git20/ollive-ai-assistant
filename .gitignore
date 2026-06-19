@@ -7,3 +7,7 @@ eval_report.pdf
 *.egg-info/
 dist/
 build/
+.venv/
+node_modules/
+frontend/.next/
+frontend/out/

@@ -3,6 +3,14 @@ from tools.calculator import calculate, TOOL_DEFINITION as CALC_DEF
 from tools.datetime_tool import get_datetime_info, TOOL_DEFINITION as DT_DEF
 from tools.web_search import search_web, TOOL_DEFINITION as SEARCH_DEF
 
+_DATETIME_PATTERN = re.compile(
+    r'\b(date|time|today|now|year|month|when)\b|what (day|time) is it',
+    re.IGNORECASE
+)
+
+def _triggers_datetime(text: str) -> bool:
+    return bool(_DATETIME_PATTERN.search(text))
+
 def _has_math_expression(text: str) -> bool:
     """Detect if the message contains an inline math expression."""
     return bool(re.search(r'\d+\s*[\+\-\*\/\%\^]\s*\d+', text))
@@ -15,10 +23,9 @@ def route_tool(user_message: str) -> tuple[str | None, str | None]:
     msg_lower = user_message.lower()
 
     # Datetime check
-    for kw in DT_DEF["trigger_keywords"]:
-        if re.search(rf"\b{re.escape(kw)}\b", msg_lower):
-            result = get_datetime_info(user_message)
-            return "datetime", result
+    if _triggers_datetime(msg_lower):
+        result = get_datetime_info(user_message)
+        return "datetime", result
 
     # Web Search check
     for kw in SEARCH_DEF["trigger_keywords"]:

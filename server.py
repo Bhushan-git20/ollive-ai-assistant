@@ -19,9 +19,11 @@ init_logs_db()
 app = FastAPI(title="Ollive AI Assistant API")
 
 # Configure CORS for Next.js frontend
+import os
+allowed_origin = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to frontend URL
+    allow_origins=[allowed_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,8 +78,6 @@ def chat(request: ChatRequest):
             "guardrail_triggered": True
         }
 
-    save_message(session_id, model_choice, "user", user_input)
-
     # Tool routing
     tool_name, tool_result = route_tool(user_input)
 
@@ -92,6 +92,8 @@ def chat(request: ChatRequest):
         response, p_tok, c_tok, latency = generate(
             user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt
         )
+        # Save user message only if generation succeeds
+        save_message(session_id, model_choice, "user", user_input)
     except Exception as e:
         response = f"⚠️ Model error: {e}"
         p_tok, c_tok, latency = 0, 0, 0.0
@@ -134,12 +136,12 @@ def chat_stream(request: ChatRequest):
             yield f"data: {json.dumps({'content': f'🚫 {reason}', 'tool_used': None})}\n\n"
         return StreamingResponse(err_stream(), media_type="text/event-stream")
 
-    user_msg_id = save_message(session_id, model_choice, "user", user_input)
     tool_name, tool_result = route_tool(user_input)
     fresh_history = get_history(session_id, model_choice)
 
     def generate_responses():
         tool_str = f"{tool_name} -> {tool_result}" if tool_result else None
+        user_msg_saved = False
         
         try:
             if model_choice == "gemini-flash-lite-latest" or "gemini" in model_choice:
@@ -150,7 +152,13 @@ def chat_stream(request: ChatRequest):
                 stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
 
             full_response = ""
+            first_chunk = True
             for chunk in stream:
+                if first_chunk:
+                    save_message(session_id, model_choice, "user", user_input)
+                    user_msg_saved = True
+                    first_chunk = False
+                    
                 full_response += chunk
                 payload = {
                     "content": chunk,
@@ -185,38 +193,46 @@ def rate(message_id: int, req: RateRequest):
     return {"status": "success"}
 
 # --- EVAL RUNNER ---
-eval_process = None
+import threading
+from eval.eval_runner import main as run_eval_main
+
+eval_thread = None
+
+def run_eval_background(log_path):
+    import sys, io
+    with open(log_path, "w") as f:
+        old_stdout = sys.stdout
+        sys.stdout = f
+        try:
+            run_eval_main()
+        except Exception as e:
+            f.write(f"\nERROR: {e}\n")
+            import traceback
+            traceback.print_exc(file=f)
+        finally:
+            sys.stdout = old_stdout
 
 @app.post("/api/eval/run")
 def run_eval():
-    global eval_process
-    if eval_process and eval_process.poll() is None:
+    global eval_thread
+    if eval_thread and eval_thread.is_alive():
         return {"status": "already_running"}
     
-    # Run the eval script in the background
-    script_path = os.path.join(os.path.dirname(__file__), "eval", "eval_runner.py")
     log_path = os.path.join(os.path.dirname(__file__), "eval", "eval_logs.txt")
-    
-    with open(log_path, "w") as f:
-        f.write("Starting Evaluation Runner...\n")
-
-    eval_process = subprocess.Popen(
-        [sys.executable, script_path],
-        stdout=open(log_path, "a"),
-        stderr=subprocess.STDOUT
-    )
+    eval_thread = threading.Thread(target=run_eval_background, args=(log_path,))
+    eval_thread.start()
     return {"status": "started"}
 
 @app.get("/api/eval/logs")
 def get_eval_logs():
-    global eval_process
+    global eval_thread
     log_path = os.path.join(os.path.dirname(__file__), "eval", "eval_logs.txt")
     logs = ""
     if os.path.exists(log_path):
         with open(log_path, "r", encoding="utf-8") as f:
             logs = f.read()
     
-    is_running = eval_process is not None and eval_process.poll() is None
+    is_running = eval_thread is not None and eval_thread.is_alive()
     return {"logs": logs, "is_running": is_running}
 
 @app.post("/api/compare")
@@ -261,3 +277,9 @@ def compare(request: CompareRequest):
             "tokens": q_ct
         }
     }
+
+from fastapi.staticfiles import StaticFiles
+
+frontend_out = os.path.join(os.path.dirname(__file__), "frontend", "out")
+if os.path.exists(frontend_out):
+    app.mount("/", StaticFiles(directory=frontend_out, html=True), name="frontend")

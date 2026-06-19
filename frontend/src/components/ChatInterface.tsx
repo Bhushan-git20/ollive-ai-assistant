@@ -317,7 +317,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
             size="icon" 
             className="absolute right-2 bottom-2 h-10 w-10 rounded-lg transition-transform active:scale-95"
             disabled={!input.trim() || isLoading}
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
           >
             <Send className="h-4 w-4" />
           </Button>

@@ -3,9 +3,7 @@ title: Ollive AI Personal Assistant
 emoji: 🤖
 colorFrom: indigo
 colorTo: blue
-sdk: streamlit
-sdk_version: 1.35.0
-app_file: app.py
+sdk: docker
 pinned: false
 license: mit
 ---
