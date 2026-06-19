@@ -32,7 +32,7 @@ def generate(prompt: str, history: List[Dict[str, Any]], tool_context: str = "",
     full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
 
     messages = [{"role": "system", "content": full_system}]
-    for msg in history[:-1]:
+    for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
         
     messages.append({"role": "user", "content": prompt})
@@ -76,7 +76,7 @@ def generate_stream(prompt: str, history: List[Dict[str, Any]], tool_context: st
     full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
 
     messages = [{"role": "system", "content": full_system}]
-    for msg in history[:-1]:
+    for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
         
     messages.append({"role": "user", "content": prompt})
