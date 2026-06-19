@@ -111,13 +111,13 @@ export default function Home() {
           <div className="px-8 pt-6 pb-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 sticky top-0">
             <TabsList className="bg-muted/50">
               <TabsTrigger value="chat" className="gap-2">
-                <MessageSquare className="h-4 w-4" /> Chat
+                <MessageSquare className="h-4 w-4 text-blue-500" /> Chat
               </TabsTrigger>
               <TabsTrigger value="compare" className="gap-2">
-                <Scale className="h-4 w-4" /> Compare
+                <Scale className="h-4 w-4 text-purple-500" /> Compare
               </TabsTrigger>
               <TabsTrigger value="eval" className="gap-2">
-                <BarChart3 className="h-4 w-4" /> Eval
+                <BarChart3 className="h-4 w-4 text-green-500" /> Eval
               </TabsTrigger>
             </TabsList>
           </div>
