@@ -18,13 +18,10 @@ init_logs_db()
 
 app = FastAPI(title="Ollive AI Assistant API")
 
-# Configure CORS for Next.js frontend
-import os
-allowed_origin = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
+# Configure CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[allowed_origin],
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

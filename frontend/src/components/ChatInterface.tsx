@@ -184,19 +184,19 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
   ];
 
   return (
-    <div className="flex flex-col h-full bg-card/30 border border-border/50 rounded-2xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden shadow-lg">
       <div className="flex-1 p-6 overflow-y-auto" ref={scrollRef}>
         <div className="space-y-6 pb-4">
           {messages.length === 0 && (
             <div className="h-[40vh] flex flex-col items-center justify-center text-muted-foreground opacity-60">
               <Bot className="h-12 w-12 mb-4" />
-              <p>Ask {activeModel} anything...</p>
+              <p className="font-heading text-2xl tracking-widest text-primary uppercase">Ask {activeModel} anything...</p>
               <div className="grid grid-cols-2 gap-2 mt-6">
                 {templates.map((tpl, idx) => (
                   <button 
                     key={idx}
                     onClick={() => handleSubmit(tpl)}
-                    className="px-4 py-2 border border-border/50 rounded-lg text-sm hover:bg-muted/50 transition-colors"
+                    className="px-4 py-2 border border-border rounded-lg text-xs font-semibold tracking-wider hover:border-primary hover:text-primary transition-colors"
                   >
                     {tpl}
                   </button>
@@ -299,7 +299,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
         </div>
       </div>
 
-      <div className="p-4 bg-background/50 backdrop-blur-sm border-t border-border/50">
+      <div className="p-4 bg-background border-t border-border">
         <div className="relative flex items-center">
           <Textarea
             value={input}
@@ -311,11 +311,11 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
               }
             }}
             placeholder="Send a message..."
-            className="min-h-[60px] max-h-[200px] pr-14 resize-none rounded-xl border-muted-foreground/20 focus-visible:ring-primary/30"
+            className="min-h-[60px] max-h-[200px] pr-14 resize-none rounded-xl border-border focus-visible:ring-primary font-sans text-sm"
           />
           <Button 
             size="icon" 
-            className="absolute right-2 bottom-2 h-10 w-10 rounded-lg transition-transform active:scale-95"
+            className="absolute right-2 bottom-2 h-10 w-10 rounded-lg transition-all active:scale-95 border border-transparent hover:border-primary hover:bg-transparent hover:text-primary text-primary-foreground bg-primary"
             disabled={!input.trim() || isLoading}
             onClick={() => handleSubmit()}
           >

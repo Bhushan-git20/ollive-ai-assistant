@@ -27,23 +27,23 @@ def route_tool(user_message: str) -> tuple[str | None, str | None]:
         result = get_datetime_info(user_message)
         return "datetime", result
 
-    # Web Search check
-    for kw in SEARCH_DEF["trigger_keywords"]:
-        if re.search(rf"\b{re.escape(kw)}\b", msg_lower):
-            result = search_web(user_message)
-            return "web_search", result
-
     # Calculator check — keyword OR inline expression
     has_calc_kw = any(re.search(rf"\b{re.escape(kw)}\b", msg_lower) for kw in CALC_DEF["trigger_keywords"])
     has_expr = _has_math_expression(user_message)
 
     if has_calc_kw or has_expr:
         # Try to extract math expression from message
-        expr_match = re.search(r'[\d\s\+\-\*\/\%\^\(\)\.]+', user_message)
+        expr_match = re.search(r'[\d\(][\d\s\+\-\*\/\%\^\(\)\.]*[\d\)]', user_message)
         if expr_match:
             expr = expr_match.group().strip()
             if re.search(r'\d', expr) and re.search(r'[\+\-\*\/]', expr):
                 result = calculate(expr)
                 return "calculator", result
+
+    # Web Search check
+    for kw in SEARCH_DEF["trigger_keywords"]:
+        if re.search(rf"\b{re.escape(kw)}\b", msg_lower):
+            result = search_web(user_message)
+            return "web_search", result
 
     return None, None

@@ -48,13 +48,13 @@ export default function CompareInterface() {
 
   return (
     <div className="flex flex-col h-full gap-6">
-      <Card className="p-6 bg-card/40 backdrop-blur border-border/50 shadow-sm shrink-0">
+      <Card className="p-6 bg-card border border-border shadow-lg shrink-0 rounded-xl">
         <div className="flex items-start gap-4">
           <div className="bg-primary/10 p-3 rounded-xl">
             <Scale className="h-6 w-6 text-primary" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold tracking-tight">Model Comparison</h2>
+            <h2 className="font-heading text-3xl tracking-widest uppercase text-primary">Model Comparison</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Send a single prompt and watch how both frontier (Gemini) and open-source (Qwen) models respond.
             </p>
@@ -68,7 +68,7 @@ export default function CompareInterface() {
               <Button
                 onClick={handleCompare}
                 disabled={!input.trim() || isLoading}
-                className="absolute right-2 bottom-2 rounded-lg"
+                className="absolute right-2 bottom-2 rounded-lg transition-all active:scale-95 border border-transparent hover:border-primary hover:bg-transparent hover:text-primary"
               >
                 {isLoading ? "Running..." : "Compare Models"}
                 {!isLoading && <Send className="ml-2 h-4 w-4" />}

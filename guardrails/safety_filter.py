@@ -7,7 +7,7 @@ _BLOCKED_PATTERNS = [
     r"\b(kill (yourself|myself|himself|herself))\b",
     r"\b(suicide (method|plan|how))\b",
     r"\b(child (porn|abuse|exploit))\b",
-    r"\b(hack (into|a|the) (bank|system|account|password))\b",
+    r"\b(hack (into )?(a |the )?(bank|system|account|password))\b",
     r"\bjailbreak\b",
     r"\bignore (all )?(previous |prior )?(instructions?|prompt)\b",
     r"\byou are now (dan|an? (unrestricted|unfiltered|evil))\b",

@@ -31,10 +31,10 @@ export default function Home() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border/30 bg-card/40 backdrop-blur-2xl flex flex-col p-4">
+      <aside className="w-64 border-r border-border bg-card flex flex-col p-4 shadow-xl z-20">
         <div className="flex items-center gap-2 mb-8 px-2">
           <Bot className="h-6 w-6 text-primary" />
-          <h1 className="font-semibold text-lg tracking-tight">Ollive AI</h1>
+          <h1 className="font-heading text-3xl tracking-widest text-primary uppercase mt-1">Ollive AI</h1>
         </div>
 
         <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -47,8 +47,8 @@ export default function Home() {
                 onClick={() => setActiveModel("gemini-flash-lite-latest")}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                   activeModel === "gemini-flash-lite-latest"
-                    ? "bg-primary/15 text-primary font-medium border border-primary/20 shadow-sm"
-                    : "hover:bg-muted text-muted-foreground border border-transparent"
+                    ? "bg-primary text-primary-foreground font-medium shadow-md"
+                    : "hover:bg-muted text-muted-foreground"
                 }`}
               >
                 <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
@@ -58,8 +58,8 @@ export default function Home() {
                 onClick={() => setActiveModel("qwen2.5-0.5B")}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
                   activeModel === "qwen2.5-0.5B"
-                    ? "bg-primary/15 text-primary font-medium border border-primary/20 shadow-sm"
-                    : "hover:bg-muted text-muted-foreground border border-transparent"
+                    ? "bg-primary text-primary-foreground font-medium shadow-md"
+                    : "hover:bg-muted text-muted-foreground"
                 }`}
               >
                 <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />

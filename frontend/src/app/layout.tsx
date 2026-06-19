@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Bebas_Neue, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+const bebasNeue = Bebas_Neue({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  weight: "400",
+  variable: "--font-bebas-neue",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${dmSans.variable} ${bebasNeue.variable} font-sans antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
         <ThemeProvider
