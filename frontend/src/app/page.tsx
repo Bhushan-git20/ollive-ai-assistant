@@ -110,14 +110,14 @@ export default function Home() {
         <Tabs defaultValue="chat" className="flex-1 flex flex-col w-full h-full relative z-10">
           <div className="px-8 pt-6 pb-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 sticky top-0">
             <TabsList className="bg-muted/50">
-              <TabsTrigger value="chat" className="gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-500" /> Chat
+              <TabsTrigger value="chat" className="gap-2 font-medium">
+                <MessageSquare className="h-5 w-5 text-blue-700 dark:text-blue-400 drop-shadow-md" /> Chat
               </TabsTrigger>
-              <TabsTrigger value="compare" className="gap-2">
-                <Scale className="h-4 w-4 text-purple-500" /> Compare
+              <TabsTrigger value="compare" className="gap-2 font-medium">
+                <Scale className="h-5 w-5 text-purple-700 dark:text-purple-400 drop-shadow-md" /> Compare
               </TabsTrigger>
-              <TabsTrigger value="eval" className="gap-2">
-                <BarChart3 className="h-4 w-4 text-green-500" /> Eval
+              <TabsTrigger value="eval" className="gap-2 font-medium">
+                <BarChart3 className="h-5 w-5 text-emerald-700 dark:text-emerald-400 drop-shadow-md" /> Eval
               </TabsTrigger>
             </TabsList>
           </div>
