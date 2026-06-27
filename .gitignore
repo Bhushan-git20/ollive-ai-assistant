@@ -16,3 +16,6 @@ frontend/out/
 eval/eval_logs.txt
 # IDE & Agent Artifacts
 .agent/
+
+# Eval logs
+eval/eval_logs.txt
