@@ -14,3 +14,5 @@ frontend/out/
 .planning/
 .stitch/
 eval/eval_logs.txt
+# IDE & Agent Artifacts
+.agent/
