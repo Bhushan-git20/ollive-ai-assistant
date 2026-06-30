@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Activity, ShieldAlert, Cpu, Zap, Play, Terminal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { getApiUrl } from "@/lib/utils";
 
 export default function EvalDashboard() {
@@ -45,7 +45,7 @@ export default function EvalDashboard() {
           setLogs(data.logs);
           setIsRunning(data.is_running);
         }
-      } catch (err) {
+      } catch {
         // ignore
       }
     };

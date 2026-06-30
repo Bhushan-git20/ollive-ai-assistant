@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { Bot, MessageSquare, Scale, BarChart3, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatInterface from "@/components/ChatInterface";

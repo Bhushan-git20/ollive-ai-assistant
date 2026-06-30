@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User, ShieldAlert, Wrench, ThumbsUp, ThumbsDown, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getApiUrl } from "@/lib/utils";
@@ -18,6 +17,19 @@ interface Message {
   guardrail_triggered?: boolean;
   rating?: number;
 }
+
+const allTemplates = [
+  "Explain quantum physics simply",
+  "Write a Python script for a scraper",
+  "What is the date today?",
+  "Calculate 24 * 365",
+  "How do neural networks work?",
+  "Write a haiku about the ocean",
+  "What's a good recipe for pancakes?",
+  "Translate 'Good morning' to Spanish",
+  "Summarize the theory of relativity",
+  "Write a SQL query to join two tables"
+];
 
 export default function ChatInterface({ activeModel, systemPrompt }: { activeModel: string, systemPrompt?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -158,7 +170,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
                     };
                     return newMsgs;
                   });
-                } catch (e) {
+                } catch {
                   // Ignore JSON parse errors for incomplete chunks
                 }
               }
@@ -177,24 +189,9 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
     }
   };
 
-  const allTemplates = [
-    "Explain quantum physics simply",
-    "Write a Python script for a scraper",
-    "What is the date today?",
-    "Calculate 24 * 365",
-    "How do neural networks work?",
-    "Write a haiku about the ocean",
-    "What's a good recipe for pancakes?",
-    "Translate 'Good morning' to Spanish",
-    "Summarize the theory of relativity",
-    "Write a SQL query to join two tables"
-  ];
-
-  const [displayTemplates, setDisplayTemplates] = useState<string[]>([]);
-
-  useEffect(() => {
+  const displayTemplates = useMemo(() => {
     const shuffled = [...allTemplates].sort(() => 0.5 - Math.random());
-    setDisplayTemplates(shuffled.slice(0, 4));
+    return shuffled.slice(0, 4);
   }, [activeModel]);
 
   return (
