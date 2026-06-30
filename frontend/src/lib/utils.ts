@@ -6,11 +6,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getApiUrl(path: string): string {
-  if (typeof window !== "undefined") {
+  let baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+  if (!baseUrl && typeof window !== "undefined") {
     if (window.location.port === "3000") {
-      return `http://localhost:8000${path}`;
+      baseUrl = "http://localhost:8000";
     }
   }
+
+  if (baseUrl) {
+    const normalizedBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${normalizedBase}${normalizedPath}`;
+  }
+
   return path;
 }
 
