@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Send, Scale, Clock, FileText } from "lucide-react";
 import { motion } from "framer-motion";
+import { getApiUrl } from "@/lib/utils";
 
 export default function CompareInterface() {
   const [input, setInput] = useState("");
@@ -21,7 +22,7 @@ export default function CompareInterface() {
     setResults(null);
 
     try {
-      const res = await fetch("http://localhost:8000/api/compare", {
+      const res = await fetch(getApiUrl("/api/compare"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

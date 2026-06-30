@@ -10,6 +10,7 @@ import CompareInterface from "@/components/CompareInterface";
 import EvalDashboard from "@/components/EvalDashboard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Textarea } from "@/components/ui/textarea";
+import { getApiUrl } from "@/lib/utils";
 
 export default function Home() {
   const [activeModel, setActiveModel] = useState("gemini-flash-lite-latest");
@@ -17,7 +18,7 @@ export default function Home() {
 
   const handleClearHistory = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/history/session_123?model=${activeModel}`, {
+      const res = await fetch(getApiUrl(`/api/history/session_123?model=${activeModel}`), {
         method: "DELETE"
       });
       if (res.ok) {
@@ -76,7 +77,7 @@ export default function Home() {
               className="text-xs min-h-[80px] bg-background/50 border-border/50 resize-none"
               placeholder="e.g. You are a helpful assistant..."
               value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSystemPrompt(e.target.value)}
             />
           </div>
 
@@ -106,9 +107,9 @@ export default function Home() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 bg-background relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
         <Tabs defaultValue="chat" className="flex-1 flex flex-col w-full h-full relative z-10">
-          <div className="px-8 pt-6 pb-2 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10 sticky top-0">
+          <div className="px-8 pt-6 pb-2 border-b border-border/50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-10 sticky top-0">
             <TabsList className="bg-muted/50">
               <TabsTrigger value="chat" className="gap-2 font-medium">
                 <MessageSquare className="h-5 w-5 text-blue-700 dark:text-blue-400 drop-shadow-md" /> Chat

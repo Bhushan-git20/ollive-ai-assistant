@@ -6,6 +6,7 @@ import { Activity, ShieldAlert, Cpu, Zap, Play, Terminal } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { getApiUrl } from "@/lib/utils";
 
 export default function EvalDashboard() {
   const [stats, setStats] = useState<{name: string, requests: number, latency: number, tokens: number, blocked: number}[]>([]);
@@ -15,7 +16,7 @@ export default function EvalDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/stats");
+        const res = await fetch(getApiUrl("/api/stats"));
         if (res.ok) {
           const data = await res.json();
           const statsArray = data.stats.map((row: { model: string, requests: number, avg_latency_ms: number, total_prompt_tokens?: number, total_completion_tokens?: number, guardrail_hits: number }) => ({
@@ -38,7 +39,7 @@ export default function EvalDashboard() {
     let interval: NodeJS.Timeout;
     const fetchLogs = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/eval/logs");
+        const res = await fetch(getApiUrl("/api/eval/logs"));
         if (res.ok) {
           const data = await res.json();
           setLogs(data.logs);
@@ -59,7 +60,7 @@ export default function EvalDashboard() {
 
   const handleRunEval = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/eval/run", { method: "POST" });
+      const res = await fetch(getApiUrl("/api/eval/run"), { method: "POST" });
       if (res.ok) {
         setIsRunning(true);
         setLogs("Starting Evaluation Runner...\n");

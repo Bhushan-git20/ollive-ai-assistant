@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User, ShieldAlert, Wrench, ThumbsUp, ThumbsDown, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getApiUrl } from "@/lib/utils";
 
 interface Message {
   id?: number;
@@ -32,7 +33,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/history/${sessionId}?model=${activeModel}`);
+        const res = await fetch(getApiUrl(`/api/history/${sessionId}?model=${activeModel}`));
         if (res.ok) {
           const data = await res.json();
           // Transform history to match Message interface
@@ -67,7 +68,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
     });
 
     try {
-      await fetch(`http://localhost:8000/api/rate/${messageId}`, {
+      await fetch(getApiUrl(`/api/rate/${messageId}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating })
@@ -94,7 +95,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/chat/stream", {
+      const res = await fetch(getApiUrl("/api/chat/stream"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
