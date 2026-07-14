@@ -4,7 +4,7 @@ import google.generativeai as genai
 from guardrails.safety_filter import SYSTEM_SAFETY_SUFFIX
 from typing import List, Dict, Any
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-1.5-flash"
 _client = None
 
 def _get_client(system_prompt: str = None):
