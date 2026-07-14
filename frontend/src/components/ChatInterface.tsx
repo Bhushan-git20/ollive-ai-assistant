@@ -41,6 +41,14 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
   // Hardcoded session ID for simplicity
   const sessionId = "session_123";
 
+  const [displayTemplates, setDisplayTemplates] = useState<string[]>([]);
+
+  // Shuffle templates on mount/model change in a side-effect hook
+  useEffect(() => {
+    const shuffled = [...allTemplates].sort(() => 0.5 - Math.random());
+    setDisplayTemplates(shuffled.slice(0, 4));
+  }, [activeModel]);
+
   // Load history on mount or model change
   useEffect(() => {
     const fetchHistory = async () => {
@@ -188,11 +196,6 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
       setIsLoading(false);
     }
   };
-
-  const displayTemplates = useMemo(() => {
-    const shuffled = [...allTemplates].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 4);
-  }, [activeModel]);
 
   return (
     <div className="flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden shadow-lg">
