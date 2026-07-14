@@ -5,7 +5,17 @@ from datetime import datetime
 DB_PATH = os.path.join(os.path.dirname(__file__), "../data/memory.db")
 
 def get_connection():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    global DB_PATH
+    try:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        test_file = os.path.join(os.path.dirname(DB_PATH), ".write_test")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+    except PermissionError:
+        DB_PATH = "/tmp/memory.db"
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        
     return sqlite3.connect(DB_PATH)
 
 def init_logs_db():
@@ -41,7 +51,7 @@ def log_request(session_id: str, model: str, prompt_tokens: int,
     conn.close()
 
 def get_stats() -> list[dict]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
     rows = conn.execute("""
         SELECT model,

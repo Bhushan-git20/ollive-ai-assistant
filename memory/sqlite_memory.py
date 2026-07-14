@@ -5,7 +5,17 @@ from datetime import datetime
 DB_PATH = os.path.join(os.path.dirname(__file__), "../data/memory.db")
 
 def get_connection():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    global DB_PATH
+    try:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        test_file = os.path.join(os.path.dirname(DB_PATH), ".write_test")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+    except PermissionError:
+        DB_PATH = "/tmp/memory.db"
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
