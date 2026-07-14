@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Bot, User, ShieldAlert, Wrench, ThumbsUp, ThumbsDown, Copy, Check } from "lucide-react";
@@ -31,6 +31,22 @@ const allTemplates = [
   "Write a SQL query to join two tables"
 ];
 
+const getPureShuffle = (templates: string[], seed: string): string[] => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const shuffled = [...templates];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.abs((hash + i) * 9301 + 49297) % 233280 % (i + 1);
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = temp;
+    hash = (hash + j) * 31;
+  }
+  return shuffled;
+};
+
 export default function ChatInterface({ activeModel, systemPrompt }: { activeModel: string, systemPrompt?: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -41,13 +57,15 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
   // Hardcoded session ID for simplicity
   const sessionId = "session_123";
 
-  const [displayTemplates, setDisplayTemplates] = useState<string[]>([]);
+  const [prevModel, setPrevModel] = useState(activeModel);
+  const [displayTemplates, setDisplayTemplates] = useState<string[]>(() => {
+    return getPureShuffle(allTemplates, activeModel).slice(0, 4);
+  });
 
-  // Shuffle templates on mount/model change in a side-effect hook
-  useEffect(() => {
-    const shuffled = [...allTemplates].sort(() => 0.5 - Math.random());
-    setDisplayTemplates(shuffled.slice(0, 4));
-  }, [activeModel]);
+  if (activeModel !== prevModel) {
+    setPrevModel(activeModel);
+    setDisplayTemplates(getPureShuffle(allTemplates, activeModel).slice(0, 4));
+  }
 
   // Load history on mount or model change
   useEffect(() => {
