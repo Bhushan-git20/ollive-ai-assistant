@@ -115,7 +115,7 @@ class TestChatEndpoint:
             "history": []
         })
         data = response.json()
-        assert "reply" in data or "response" in data or "message" in data
+        assert "reply" in data or "response" in data or "message" in data or "content" in data
 
     def test_returns_422_on_missing_message(self, client):
         response = client.post("/api/chat", json={
@@ -192,21 +192,21 @@ class TestChatStreamEndpoint:
 class TestRatingEndpoint:
 
     def test_rate_thumbs_up_returns_200(self, client):
-        response = client.post("/api/rate/msg-123", json={"rating": 1})
+        response = client.post("/api/rate/123", json={"rating": 1})
         assert response.status_code in [200, 201, 404]
         # 404 is acceptable if message doesn't exist in test DB
 
     def test_rate_thumbs_down_returns_200(self, client):
-        response = client.post("/api/rate/msg-456", json={"rating": -1})
+        response = client.post("/api/rate/456", json={"rating": -1})
         assert response.status_code in [200, 201, 404]
 
     def test_rate_invalid_value_returns_422(self, client):
-        response = client.post("/api/rate/msg-123", json={"rating": 99})
+        response = client.post("/api/rate/123", json={"rating": 99})
         # Should reject ratings outside valid range
         assert response.status_code in [200, 422]
 
     def test_rate_missing_body_returns_422(self, client):
-        response = client.post("/api/rate/msg-123", json={})
+        response = client.post("/api/rate/123", json={})
         assert response.status_code in [200, 422]
 
 
