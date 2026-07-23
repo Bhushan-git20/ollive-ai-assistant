@@ -4,34 +4,34 @@ import google.generativeai as genai
 from guardrails.safety_filter import SYSTEM_SAFETY_SUFFIX
 from typing import List, Dict, Any
 
-MODEL_NAME = "gemini-1.5-flash"
-_client = None
+_clients = {}
 
-def _get_client(system_prompt: str = None):
-    global _client
-    if _client is None:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not set. Add it to your .env file.")
-        genai.configure(api_key=api_key)
-        
-        base_system = system_prompt if system_prompt else "You are a helpful personal AI assistant."
-        full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
-        
-        _client = genai.GenerativeModel(
-            model_name=MODEL_NAME,
+def _get_client(system_prompt: str = None, model_name: str = "gemini-1.5-flash"):
+    global _clients
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not set. Add it to your .env file.")
+    genai.configure(api_key=api_key)
+    
+    base_system = system_prompt if system_prompt else "You are a helpful personal AI assistant."
+    full_system = f"{base_system}\n\n{SYSTEM_SAFETY_SUFFIX}".strip()
+    
+    cache_key = (full_system, model_name)
+    if cache_key not in _clients:
+        _clients[cache_key] = genai.GenerativeModel(
+            model_name=model_name,
             system_instruction=full_system
         )
-    return _client
+    return _clients[cache_key]
 
-def generate(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None) -> tuple[str, int, int, float]:
+def generate(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None, model_name: str = "gemini-1.5-flash") -> tuple[str, int, int, float]:
     start_time = time.time()
     
     # Prepend tool context to prompt if available
     if tool_context:
         prompt = f"[Tool Output: {tool_context}]\n\n{prompt}"
 
-    model = _get_client(system_prompt)
+    model = _get_client(system_prompt, model_name)
     
     gemini_messages = []
     for m in history:
@@ -47,11 +47,11 @@ def generate(prompt: str, history: List[Dict[str, Any]], tool_context: str = "",
     
     return response.text, p_tokens, c_tokens, latency
 
-def generate_stream(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None):
+def generate_stream(prompt: str, history: List[Dict[str, Any]], tool_context: str = "", system_prompt: str = None, model_name: str = "gemini-1.5-flash"):
     if tool_context:
         prompt = f"[Tool Output: {tool_context}]\n\n{prompt}"
 
-    model = _get_client(system_prompt)
+    model = _get_client(system_prompt, model_name)
     
     gemini_messages = []
     for msg in history:

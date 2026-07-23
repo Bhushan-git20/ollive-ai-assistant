@@ -13,7 +13,7 @@ license: mit
 **🚀 [Try it live on Hugging Face Spaces](https://huggingface.co/spaces/Bhushanam/ollive-ai-assistant)**
 
 
-A dual-model AI personal assistant comparing **OSS (Qwen 2.5 0.5B)** and **Frontier (Gemini 2.5 Flash)** models with a structured evaluation framework.
+A dual-model AI personal assistant comparing **OSS (Qwen 2.5 0.5B)** and **Frontier (Gemini 1.5 / 2.0 Flash)** models with a structured evaluation framework.
 
 Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 
@@ -25,7 +25,7 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 
 | Feature | Details |
 |---|---|
-| **Dual models** | Qwen2.5-0.5B-Instruct (OSS) + Gemini 2.5 Flash (frontier) |
+| **Dual models** | Qwen2.5-0.5B-Instruct (OSS) + Gemini 1.5 / 2.0 Flash (frontier) |
 | **Model toggle** | Switch mid-conversation; separate memory per model |
 | **Persistent memory** | SQLite per session — retains context across turns |
 | **Web Search** | DuckDuckGo live web search integration |
@@ -80,7 +80,7 @@ The evaluation suite was recently updated alongside a complete UI redesign (matc
 
 | Model | Avg Latency | Cost per 1K tokens | Deploy |
 |---|---|---|---|
-| Gemini 2.5 Flash | ~800ms | Free (AI Studio) | Cloud |
+| Gemini 1.5 / 2.0 Flash | ~800ms | Free (AI Studio) | Cloud |
 | Qwen2.5-0.5B | ~2–8s (CPU) | $0.00 | HF Spaces |
 
 ---
@@ -91,7 +91,7 @@ The evaluation suite was recently updated alongside a complete UI redesign (matc
 frontend/                 ← Next.js (React) UI with Shadcn and TailwindCSS
 server.py                 ← FastAPI Backend serving API endpoints
 models/
-  gemini_model.py         ← Gemini 2.5 Flash via google-generativeai
+  gemini_model.py         ← Gemini 1.5 / 2.0 Flash via google-generativeai
   qwen_model.py           ← Qwen2.5-0.5B via HuggingFace transformers
 tools/
   calculator.py           ← Safe AST-based math evaluator

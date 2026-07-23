@@ -82,14 +82,19 @@ def chat(request: ChatRequest):
     # Load model and generate
     fresh_history = get_history(session_id, model_choice)
     try:
-        if model_choice == "gemini-flash-lite-latest":
-            from models.gemini_model import generate
+        if "gemini" in model_choice.lower() or model_choice == "gemini-flash-lite-latest":
+            from models.gemini_model import generate as gemini_generate
+            gemini_id = "gemini-1.5-flash"
+            if "2.0" in model_choice:
+                gemini_id = "gemini-2.0-flash"
+            response, p_tok, c_tok, latency = gemini_generate(
+                user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt, model_name=gemini_id
+            )
         else:
-            from models.qwen_model import generate
-
-        response, p_tok, c_tok, latency = generate(
-            user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt
-        )
+            from models.qwen_model import generate as qwen_generate
+            response, p_tok, c_tok, latency = qwen_generate(
+                user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt
+            )
         # Save user message only if generation succeeds
         save_message(session_id, model_choice, "user", user_input)
     except Exception as e:
@@ -142,12 +147,15 @@ def chat_stream(request: ChatRequest):
         user_msg_saved = False
         
         try:
-            if model_choice == "gemini-flash-lite-latest" or "gemini" in model_choice:
-                from models.gemini_model import generate_stream
-                stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
+            if "gemini" in model_choice.lower() or model_choice == "gemini-flash-lite-latest":
+                from models.gemini_model import generate_stream as gemini_generate_stream
+                gemini_id = "gemini-1.5-flash"
+                if "2.0" in model_choice:
+                    gemini_id = "gemini-2.0-flash"
+                stream = gemini_generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt, model_name=gemini_id)
             else:
-                from models.qwen_model import generate_stream
-                stream = generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
+                from models.qwen_model import generate_stream as qwen_generate_stream
+                stream = qwen_generate_stream(user_input, fresh_history, tool_context=tool_result or "", system_prompt=system_prompt)
 
             full_response = ""
             for chunk in stream:
