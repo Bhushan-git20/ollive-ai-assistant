@@ -64,7 +64,7 @@ export default function CompareInterface() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a challenging question..."
-                className="min-h-[80px] pr-28 resize-none bg-background/50 border-muted-foreground/20 rounded-xl"
+                className="min-h-20 pr-28 resize-none bg-background/50 border-muted-foreground/20 rounded-xl"
               />
               <Button
                 onClick={handleCompare}

@@ -118,7 +118,7 @@ export default function EvalDashboard() {
       <div className="grid grid-cols-2 gap-6">
         <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
           <h3 className="text-lg font-semibold tracking-tight mb-6 text-yellow-500">Latency Comparison (ms)</h3>
-          <div className="h-[300px]">
+          <div className="h-75">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
@@ -136,7 +136,7 @@ export default function EvalDashboard() {
 
         <Card className="bg-card/40 backdrop-blur border-border/50 overflow-hidden shadow-sm p-6">
           <h3 className="text-lg font-semibold tracking-tight mb-6 text-yellow-500">Token Usage Comparison</h3>
-          <div className="h-[300px]">
+          <div className="h-75">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />

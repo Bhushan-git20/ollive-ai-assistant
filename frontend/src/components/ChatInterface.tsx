@@ -343,7 +343,7 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
               }
             }}
             placeholder="Send a message..."
-            className="min-h-[60px] max-h-[200px] pr-14 resize-none rounded-xl border-border focus-visible:ring-primary font-sans text-sm"
+            className="min-h-15 max-h-50 pr-14 resize-none rounded-xl border-border focus-visible:ring-primary font-sans text-sm"
           />
           <Button 
             size="icon" 

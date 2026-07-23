@@ -73,7 +73,7 @@ export default function Home() {
               System Prompt
             </h2>
             <Textarea 
-              className="text-xs min-h-[80px] bg-background/50 border-border/50 resize-none"
+              className="text-xs min-h-20 bg-background/50 border-border/50 resize-none"
               placeholder="e.g. You are a helpful assistant..."
               value={systemPrompt}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSystemPrompt(e.target.value)}
