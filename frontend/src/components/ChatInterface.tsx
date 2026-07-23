@@ -276,8 +276,8 @@ export default function ChatInterface({ activeModel, systemPrompt }: { activeMod
                         </span>
                       )}
                       {msg.tool_used && (
-                        <span className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Wrench className="h-3 w-3" /> {msg.tool_used}
+                        <span className="text-[10px] text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_8px_rgba(59,130,246,0.15)] animate-pulse">
+                          <Wrench className="h-3.5 w-3.5" /> <span className="font-semibold">Tool execution:</span> {msg.tool_used}
                         </span>
                       )}
                       {msg.guardrail_triggered && (

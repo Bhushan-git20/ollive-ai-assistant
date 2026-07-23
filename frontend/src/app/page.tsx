@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getApiUrl } from "@/lib/utils";
 
 export default function Home() {
-  const [activeModel, setActiveModel] = useState("gemini-flash-lite-latest");
+  const [activeModel, setActiveModel] = useState("gemini-1.5-flash");
   const [systemPrompt, setSystemPrompt] = useState("");
 
   const handleClearHistory = async () => {
@@ -44,15 +44,26 @@ export default function Home() {
             </h2>
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => setActiveModel("gemini-flash-lite-latest")}
+                onClick={() => setActiveModel("gemini-1.5-flash")}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                  activeModel === "gemini-flash-lite-latest"
+                  activeModel === "gemini-1.5-flash"
                     ? "bg-primary text-primary-foreground font-medium shadow-md"
                     : "hover:bg-muted text-muted-foreground"
                 }`}
               >
                 <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                Gemini Flash
+                Gemini 1.5 Flash
+              </button>
+              <button
+                onClick={() => setActiveModel("gemini-2.0-flash")}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+                  activeModel === "gemini-2.0-flash"
+                    ? "bg-primary text-primary-foreground font-medium shadow-md"
+                    : "hover:bg-muted text-muted-foreground"
+                }`}
+              >
+                <div className="h-2 w-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                Gemini 2.0 Flash
               </button>
               <button
                 onClick={() => setActiveModel("qwen2.5-0.5B")}
