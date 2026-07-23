@@ -29,7 +29,7 @@ COPY --chown=user:user . $HOME/app
 
 # Switch to the non-root user to build Next.js and run the application
 USER user
-RUN cd frontend && npm run build
+RUN cd frontend && npm run build && cp -r out $HOME/frontend_out
 
 # HuggingFace Spaces expects port 7860 by default
 EXPOSE 7860

@@ -273,6 +273,13 @@ def compare(request: CompareRequest):
 
 from fastapi.staticfiles import StaticFiles
 
-frontend_out = os.path.join(os.path.dirname(__file__), "frontend", "out")
+frontend_out = "/home/user/frontend_out"
+if not os.path.exists(frontend_out):
+    frontend_out = os.path.join(os.path.dirname(__file__), "frontend", "out")
+
 if os.path.exists(frontend_out):
     app.mount("/", StaticFiles(directory=frontend_out, html=True), name="frontend")
+else:
+    @app.get("/")
+    def read_root():
+        return {"status": "ok", "message": "Ollive AI Assistant Backend is running. Frontend static files are not mounted."}
