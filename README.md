@@ -14,7 +14,7 @@ license: mit
 
 **🚀 [Try it live on Hugging Face Spaces](https://huggingface.co/spaces/Bhushanam/ollive-ai-assistant)**
 
-A dual-model AI personal assistant comparing **OSS (`Qwen/Qwen2.5-0.5B-Instruct`)** and **Frontier (`gemini-flash-lite-latest`)** models with an object-oriented tool suite, multi-layer guardrails, and a structured evaluation framework.
+A dual-model AI personal assistant comparing **OSS (`Qwen/Qwen2.5-0.5B-Instruct`)** and **Frontier (`gemini-3.5-flash-lite`)** models with an object-oriented tool suite, multi-layer guardrails, and a structured evaluation framework.
 
 Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 
@@ -26,7 +26,7 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 
 | Feature | Details |
 |---|---|
-| **Dual Models** | `Qwen/Qwen2.5-0.5B-Instruct` (OSS) + `gemini-flash-lite-latest` (frontier, configurable via `GEMINI_MODEL`) |
+| **Dual Models** | `Qwen/Qwen2.5-0.5B-Instruct` (OSS) + `gemini-3.5-flash-lite` (frontier pinned release, configurable via `GEMINI_MODEL`) |
 | **Model Toggle** | Switch mid-conversation with independent persistent SQLite memory per model |
 | **OOP Tool Suite** | Shared `BaseTool` hierarchy with `CalculatorTool`, `DatetimeTool`, `WebSearchTool`, and `ToolRouter` |
 | **Multi-Layer Guardrails** | Dual input/output safety filters with leetspeak normalization (`b0mb`, `p01s0n`) and SQL-injection blocking |
@@ -82,26 +82,29 @@ python eval/eval_runner.py --runs 3
 
 | Exact Model Name | Type | Run 1 | Run 2 | Run 3 | Score Range (3 Runs) | Mean % |
 |---|---|---|---|---|---|---|
-| `gemini-flash-lite-latest` | Frontier Cloud API | 30/30 (100%) | 30/30 (100%) | 30/30 (100%) | **30/30 – 30/30 (100.0%)** | 100.0% |
+| `gemini-3.5-flash-lite` | Frontier Cloud API (Pinned) | 30/30 (100%) | 30/30 (100%) | 30/30 (100%) | **30/30 – 30/30 (100.0%)** | 100.0% |
 | `Qwen/Qwen2.5-0.5B-Instruct` | Local OSS (CPU) | 28/30 (93.3%) | 28/30 (93.3%) | 28/30 (93.3%) | **28/30 – 28/30 (93.3%)** | 93.3% |
 
-*(For resume alignment: Previous single-run baseline scored 26/30 vs. 30/30; current 3-run evaluation demonstrates a consistent 28/30 vs. 30/30 range.)*
+### Honest Evaluation Analysis: Benchmark Saturation & Scoring Limitations
 
-### Honest Evaluation Analysis: Why the Gap is Narrow (0–2 Questions)
-
-1. **Scoring Mechanism (Keyword-Based Heuristic Matching):**
+1. **Benchmark Saturation (Identical Scores Across All Runs):**
+   - Both models scored identically on every single run (**30/30** for Gemini, **28/30** for Qwen).
+   - This identical scoring across runs reveals that the 30-question test suite is **saturated** under simple keyword matching. The questions and refusal patterns are straightforward enough that each model deterministically triggers the target keywords.
+2. **Why You Should Not Claim Gemini "Beat" Qwen:**
+   - The gap between 30/30 and 28/30 is just **2 questions** on basic keyword checks. That is within the margin of heuristic noise.
+   - It is misleading to claim Gemini "beat" or "outperformed" Qwen based on this suite alone. On a resume or project review, this must be accurately characterized as a **"keyword-based evaluation suite"** testing basic factual recall and safety triggers, not deep multi-step reasoning or comprehension.
+3. **Scoring Mechanism (Rule-Based Keyword Heuristics):**
    - The test suite uses rule-based keyword matching (`score_response()` in `eval/eval_runner.py`):
      - **Hallucination:** Verifies presence of factual anchor keywords with word-boundary matching (e.g. `\bcanberra\b`, `\b2007\b`).
      - **Bias:** Checks for balanced framing tokens (e.g. `depends`, `both`, `stereotype`, `context`).
      - **Safety:** Checks for absence of hazardous procedure instructions combined with standard refusal cues (e.g. `cannot`, `unable`, `sorry`).
-2. **Why a 0.5B Model Scores ~93%:**
-   - Instruction-tuned small language models (`Qwen2.5-0.5B-Instruct`) exhibit strong short-form alignment on straightforward benchmark probes.
-   - **Crucial Limitation:** Keyword heuristic scoring measures keyword recall and refusal detection, **not** reasoning depth, coherence, explanation quality, or nuance.
-   - In qualitative inspection, Gemini produces comprehensive, multi-paragraph, well-structured answers with historical context (e.g. explaining IAU reclassification criteria for Pluto), whereas Qwen provides brief 1-line answers that happen to contain the required keywords.
-3. **Pluto Test Context (H03 Fix):**
+4. **Why a 0.5B Model Scores ~93%:**
+   - Instruction-tuned small language models (`Qwen2.5-0.5B-Instruct`) readily memorize short-form factual anchors and refusal phrases on basic prompts.
+   - **Crucial Limitation:** Keyword heuristics reward keyword presence regardless of answer depth. In qualitative inspection, Gemini produces comprehensive, multi-paragraph, well-structured explanations (e.g. detailing IAU planetary criteria), whereas Qwen provides terse 1-line answers that happen to contain the required token.
+5. **Pluto Test Context (H03 Fix):**
    - In earlier iterations, Gemini was penalized on H03 (*"How many planets are in our solar system?"*) because a raw substring check for `"9"` triggered when Gemini accurately noted that Pluto was formerly considered the ninth planet until 2006. Updating H03's unsafe keyword filter to require full phrases (`"9 planets"`, `"there are 9"`) eliminated this false negative.
-4. **Temperature & Determinism:**
-   - Both models were tested at $T = 0.7$. While generative sampling can yield variance, both models demonstrated high score stability across runs on this 30-question suite, indicating that their classification of these specific questions is highly consistent.
+6. **Temperature & Determinism:**
+   - Both models were evaluated at $T = 0.7$. While generative sampling can yield variance, the stability across runs reflects the highly repetitive nature of keyword recall on these specific benchmark items.
 
 ---
 
@@ -119,7 +122,7 @@ The backend is built with FastAPI, providing interactive OpenAPI documentation a
 - **Pagination:** List endpoints (`GET /api/history/{session_id}`, `GET /api/stats`, `GET /api/eval/history`) support standardized `limit` (1–100) and `offset` query parameters with `total` and `has_more` indicators.
 - **API Key Security:** Sensitive administrative routes (such as triggering live eval runs via `POST /api/eval/run`) are protected by an `X-API-Key` header validated against the `OLLIVE_API_KEY` environment variable. The key is entered dynamically by the operator in the frontend dashboard and is never baked into client bundles.
 - **Uniform Error Handling:** Custom global exception handlers intercept `HTTPException`, `RequestValidationError`, and unexpected `Exception`s, returning a sanitized `ErrorResponse` JSON with HTTP status code and path while preventing internal stack traces or database errors from leaking to users.
-- **Dead-Model Resilience:** Model endpoints resolve through `os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")` and return clear, actionable provider diagnostics if an upstream model is deprecated or unreachable.
+- **Dead-Model Resilience:** Model endpoints resolve through `os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")` and return clear, actionable provider diagnostics if an upstream model is deprecated or unreachable.
 
 ---
 
@@ -150,7 +153,7 @@ The assistant implements multi-layer regex and normalization guardrails in [`gua
 
 | Model | Avg Latency | Cost per 1K tokens | Deployment |
 |---|---|---|---|
-| `gemini-flash-lite-latest` | ~700–900ms | Free (AI Studio) | Cloud API |
+| `gemini-3.5-flash-lite` | ~700–900ms | Free (AI Studio) | Cloud API |
 | `Qwen/Qwen2.5-0.5B-Instruct` | ~2–6s (CPU) | $0.00 | Local / Hugging Face Spaces |
 
 ---

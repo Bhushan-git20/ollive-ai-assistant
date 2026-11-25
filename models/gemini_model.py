@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import google.generativeai as genai
 from guardrails.safety_filter import SYSTEM_SAFETY_SUFFIX
 
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 _clients = {}
 
 

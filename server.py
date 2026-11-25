@@ -182,17 +182,17 @@ def verify_api_key(api_key: Optional[str] = Security(api_key_header)) -> str:
     return api_key
 
 
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 DEFAULT_QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/Qwen2.5-0.5B-Instruct")
 
 
 def _resolve_gemini_model_id(model_choice: str) -> str:
-    """Resolve requested model choice to an available Gemini model, falling back to GEMINI_MODEL."""
-    if model_choice in ("gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"):
-        return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    if model_choice == "gemini-flash-lite-latest":
-        return "gemini-flash-lite-latest"
-    return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    """Resolve requested model choice to a pinned Gemini model, falling back to GEMINI_MODEL."""
+    if model_choice in ("gemini-3.5-flash-lite", "gemini-flash-lite-latest"):
+        return os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    if model_choice == "gemini-2.5-flash":
+        return "gemini-2.5-flash"
+    return os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 def _seed_eval_history_if_empty() -> None:

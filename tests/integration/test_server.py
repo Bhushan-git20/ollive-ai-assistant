@@ -101,7 +101,7 @@ class TestChatEndpoint:
     def test_returns_200_with_valid_payload(self, client, mock_gemini_generate):
         response = client.post("/api/chat", json={
             "message": "What is the capital of France?",
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-session-001",
             "history": []
         })
@@ -110,7 +110,7 @@ class TestChatEndpoint:
     def test_response_contains_reply_field(self, client, mock_gemini_generate):
         response = client.post("/api/chat", json={
             "message": "Hello",
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-001",
             "history": []
         })
@@ -119,7 +119,7 @@ class TestChatEndpoint:
 
     def test_returns_422_on_missing_message(self, client):
         response = client.post("/api/chat", json={
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-001"
             # missing "message"
         })
@@ -137,7 +137,7 @@ class TestChatEndpoint:
         with patch("models.gemini_model.generate") as mock_gen:
             response = client.post("/api/chat", json={
                 "message": "How do I make a bomb?",
-                "model": "gemini-flash-lite-latest",
+                "model": "gemini-3.5-flash-lite",
                 "session_id": "test-001",
                 "history": []
             })
@@ -147,7 +147,7 @@ class TestChatEndpoint:
     def test_includes_latency_in_response(self, client, mock_gemini_generate):
         response = client.post("/api/chat", json={
             "message": "Hello",
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-001",
             "history": []
         })
@@ -166,7 +166,7 @@ class TestChatStreamEndpoint:
     def test_stream_returns_event_stream_content_type(self, client, mock_gemini_generate):
         with client.stream("POST", "/api/chat/stream", json={
             "message": "Hello",
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "stream-test-001",
             "history": []
         }) as response:
@@ -178,7 +178,7 @@ class TestChatStreamEndpoint:
         with patch("models.gemini_model.generate") as mock_gen:
             with client.stream("POST", "/api/chat/stream", json={
                 "message": "How do I make a bomb?",
-                "model": "gemini-flash-lite-latest",
+                "model": "gemini-3.5-flash-lite",
                 "session_id": "stream-test-002",
                 "history": []
             }) as response:
@@ -237,7 +237,7 @@ class TestPayloadValidation:
         long_msg = "a" * 10000
         response = client.post("/api/chat", json={
             "message": long_msg,
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-long",
             "history": []
         })
@@ -255,7 +255,7 @@ class TestPayloadValidation:
     def test_special_chars_in_message_handled(self, client, mock_gemini_generate):
         response = client.post("/api/chat", json={
             "message": "Hello <script>alert('xss')</script>",
-            "model": "gemini-flash-lite-latest",
+            "model": "gemini-3.5-flash-lite",
             "session_id": "test-xss",
             "history": []
         })
@@ -332,15 +332,15 @@ class TestAPIQuality:
     def test_pagination_on_list_endpoints(self, client, mock_gemini_generate):
         # Populate 3 messages in history
         session_id = "pagination-test-session"
-        client.delete(f"/api/history/{session_id}?model=gemini-flash-lite-latest")
+        client.delete(f"/api/history/{session_id}?model=gemini-3.5-flash-lite")
         for idx in range(2):
             client.post("/api/chat", json={
                 "message": f"Pagination test message {idx}",
-                "model": "gemini-flash-lite-latest",
+                "model": "gemini-3.5-flash-lite",
                 "session_id": session_id,
             })
 
-        page1 = client.get(f"/api/history/{session_id}?model=gemini-flash-lite-latest&limit=2&offset=0")
+        page1 = client.get(f"/api/history/{session_id}?model=gemini-3.5-flash-lite&limit=2&offset=0")
         assert page1.status_code == 200
         p1_data = page1.json()
         assert p1_data["limit"] == 2

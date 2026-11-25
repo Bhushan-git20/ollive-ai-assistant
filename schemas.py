@@ -5,10 +5,8 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 SupportedModel = Literal[
-    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
     "gemini-2.5-flash",
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
     "qwen2.5-0.5B",
 ]
 

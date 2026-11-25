@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getApiUrl } from "@/lib/utils";
 
 export default function Home() {
-  const [activeModel, setActiveModel] = useState("gemini-flash-lite-latest");
+  const [activeModel, setActiveModel] = useState("gemini-3.5-flash-lite");
   const [systemPrompt, setSystemPrompt] = useState("");
 
   const handleClearHistory = async () => {
@@ -44,15 +44,15 @@ export default function Home() {
             </h2>
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => setActiveModel("gemini-flash-lite-latest")}
+                onClick={() => setActiveModel("gemini-3.5-flash-lite")}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
-                  activeModel === "gemini-flash-lite-latest"
+                  activeModel === "gemini-3.5-flash-lite"
                     ? "bg-primary text-primary-foreground font-medium shadow-md"
                     : "hover:bg-muted text-muted-foreground"
                 }`}
               >
                 <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                Gemini Flash-Lite
+                Gemini 3.5 Flash-Lite
               </button>
               <button
                 onClick={() => setActiveModel("gemini-2.5-flash")}

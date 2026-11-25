@@ -90,7 +90,7 @@ export default function CompareInterface() {
             <div className="px-4 py-3 border-b border-blue-500/20 bg-blue-500/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-blue-500" />
-                <span className="font-semibold text-blue-400">Gemini Flash-Lite</span>
+                <span className="font-semibold text-blue-400">Gemini 3.5 Flash-Lite</span>
               </div>
               {results?.gemini && (
                 <div className="flex gap-3 text-xs text-blue-400/80 font-medium">

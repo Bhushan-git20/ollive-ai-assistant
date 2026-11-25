@@ -26,7 +26,7 @@ from observability.logger import get_stats, init_logs_db, save_eval_run
 QUESTIONS_PATH = os.path.join(os.path.dirname(__file__), "eval_questions.json")
 EVAL_RESULTS_JSON_PATH = os.path.join(os.path.dirname(__file__), "eval_results.json")
 
-DEFAULT_EVAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_EVAL_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 def load_questions() -> list[dict]:
