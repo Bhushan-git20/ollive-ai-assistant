@@ -12,6 +12,8 @@ export default function EvalDashboard() {
   const [stats, setStats] = useState<{name: string, requests: number, latency: number, tokens: number, blocked: number}[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [logs, setLogs] = useState<string>("");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [authError, setAuthError] = useState<string>("");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -59,11 +61,22 @@ export default function EvalDashboard() {
   }, [isRunning]);
 
   const handleRunEval = async () => {
+    setAuthError("");
     try {
-      const res = await fetch(getApiUrl("/api/eval/run"), { method: "POST" });
+      const headers: Record<string, string> = {};
+      if (apiKey.trim()) {
+        headers["X-API-Key"] = apiKey.trim();
+      }
+      const res = await fetch(getApiUrl("/api/eval/run"), {
+        method: "POST",
+        headers,
+      });
       if (res.ok) {
         setIsRunning(true);
         setLogs("Starting Evaluation Runner...\n");
+      } else {
+        const err = await res.json().catch(() => ({ detail: "Unauthorized" }));
+        setAuthError(err.detail || "API key required to run evaluations.");
       }
     } catch (err) {
       console.error("Failed to start eval", err);
@@ -77,13 +90,25 @@ export default function EvalDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h2 className="text-2xl font-semibold text-yellow-500">Evaluation Dashboard</h2>
-        <Button onClick={handleRunEval} disabled={isRunning} className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
-          {isRunning ? <Terminal className="h-4 w-4 animate-pulse" /> : <Play className="h-4 w-4" />}
-          {isRunning ? "Running Eval..." : "Run Evaluation Suite"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Admin X-API-Key"
+            className="h-9 px-3 rounded-md border border-border bg-background/60 text-xs w-44"
+          />
+          <Button onClick={handleRunEval} disabled={isRunning} className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold">
+            {isRunning ? <Terminal className="h-4 w-4 animate-pulse" /> : <Play className="h-4 w-4" />}
+            {isRunning ? "Running Eval..." : "Run Evaluation Suite"}
+          </Button>
+        </div>
       </div>
+      {authError && (
+        <p className="text-xs text-destructive">{authError}</p>
+      )}
 
       <div className="grid grid-cols-4 gap-4">
         {[

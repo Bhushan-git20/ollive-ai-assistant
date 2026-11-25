@@ -263,3 +263,136 @@ class TestPayloadValidation:
         if response.status_code == 200:
             # Response must never contain raw script tags
             assert "<script>" not in response.text
+
+
+# ---------------------------------------------------------------------------
+# API Quality: OpenAPI / Swagger, Pagination, API Key Auth, Error Format
+# ---------------------------------------------------------------------------
+
+class TestAPIQuality:
+
+    def test_swagger_docs_and_openapi_schemas(self, client):
+        docs_res = client.get("/docs")
+        assert docs_res.status_code == 200
+        assert "swagger" in docs_res.text.lower()
+
+        openapi_res = client.get("/openapi.json")
+        assert openapi_res.status_code == 200
+        spec = openapi_res.json()
+
+        schemas = spec.get("components", {}).get("schemas", {})
+        for expected_schema in [
+            "ChatRequest",
+            "ChatResponse",
+            "CompareRequest",
+            "CompareResponse",
+            "HistoryResponse",
+            "StatsResponse",
+            "EvalHistoryResponse",
+            "EvalLogsResponse",
+            "EvalRunTriggerResponse",
+            "RateRequest",
+            "RateResponse",
+            "HealthResponse",
+            "StatusResponse",
+            "ErrorResponse",
+        ]:
+            assert expected_schema in schemas, f"Missing OpenAPI schema: {expected_schema}"
+
+        # Every /api/ operation must define a response schema
+        for path, methods in spec.get("paths", {}).items():
+            if not path.startswith("/api/"):
+                continue
+            for method, operation in methods.items():
+                if method.lower() not in {"get", "post", "delete", "put", "patch"}:
+                    continue
+                responses = operation.get("responses", {})
+                assert "200" in responses, f"Missing 200 response on {method.upper()} {path}"
+
+    def test_eval_run_requires_api_key(self, client, monkeypatch):
+        monkeypatch.setenv("OLLIVE_API_KEY", "unit-test-secret-key")
+
+        no_key = client.post("/api/eval/run")
+        assert no_key.status_code == 401
+        body = no_key.json()
+        assert body["error"] == "http_error"
+        assert body["status_code"] == 401
+        assert "detail" in body
+
+        bad_key = client.post("/api/eval/run", headers={"X-API-Key": "wrong-key"})
+        assert bad_key.status_code == 403
+        assert bad_key.json()["status_code"] == 403
+
+        with patch("server.threading.Thread") as mock_thread:
+            good_key = client.post("/api/eval/run", headers={"X-API-Key": "unit-test-secret-key"})
+            assert good_key.status_code == 200
+            assert good_key.json()["status"] in ["started", "already_running"]
+            mock_thread.assert_called_once()
+
+    def test_pagination_on_list_endpoints(self, client, mock_gemini_generate):
+        # Populate 3 messages in history
+        session_id = "pagination-test-session"
+        client.delete(f"/api/history/{session_id}?model=gemini-flash-lite-latest")
+        for idx in range(2):
+            client.post("/api/chat", json={
+                "message": f"Pagination test message {idx}",
+                "model": "gemini-flash-lite-latest",
+                "session_id": session_id,
+            })
+
+        page1 = client.get(f"/api/history/{session_id}?model=gemini-flash-lite-latest&limit=2&offset=0")
+        assert page1.status_code == 200
+        p1_data = page1.json()
+        assert p1_data["limit"] == 2
+        assert p1_data["offset"] == 0
+        assert p1_data["total"] >= 4
+        assert len(p1_data["history"]) == 2
+        assert p1_data["has_more"] is True
+
+        stats_res = client.get("/api/stats?limit=1&offset=0")
+        assert stats_res.status_code == 200
+        stats_data = stats_res.json()
+        assert "total" in stats_data and "limit" in stats_data and "offset" in stats_data and "has_more" in stats_data
+        assert len(stats_data["stats"]) <= 1
+
+        eval_hist = client.get("/api/eval/history?limit=5&offset=0")
+        assert eval_hist.status_code == 200
+        hist_data = eval_hist.json()
+        assert "items" in hist_data and "total" in hist_data and "has_more" in hist_data
+        assert hist_data["limit"] == 5
+        assert hist_data["offset"] == 0
+
+    def test_consistent_error_response_shape(self, client):
+        # 422 validation error
+        val_err = client.post("/api/chat", json={"model": "invalid-model"})
+        assert val_err.status_code == 422
+        val_body = val_err.json()
+        assert set(["error", "detail", "status_code", "path"]).issubset(val_body.keys())
+        assert val_body["error"] == "validation_error"
+        assert val_body["status_code"] == 422
+
+        # 400 guardrail error on /api/compare
+        cmp_err = client.post("/api/compare", json={
+            "session_id": "err-test",
+            "message": "DROP TABLE users;",
+        })
+        assert cmp_err.status_code == 400
+        cmp_body = cmp_err.json()
+        assert set(["error", "detail", "status_code", "path"]).issubset(cmp_body.keys())
+        assert cmp_body["status_code"] == 400
+
+    def test_global_exception_handler_sanitizes_stack_traces_and_internal_text(self, client):
+        """Verify unhandled exceptions return a clean message without leaking stack traces or internal text."""
+        from fastapi.testclient import TestClient
+        from server import app
+        safe_client = TestClient(app, raise_server_exceptions=False)
+        with patch("server.get_history", side_effect=RuntimeError("INTERNAL_DATABASE_LEAK_SECRET_ERROR")):
+            response = safe_client.get("/api/history/any-session?model=gemini-2.5-flash")
+            assert response.status_code == 500
+            data = response.json()
+            assert data["error"] == "internal_server_error"
+            assert data["detail"] == "An unexpected server error occurred."
+            assert data["status_code"] == 500
+            assert "INTERNAL_DATABASE_LEAK" not in response.text
+            assert "Traceback" not in response.text
+

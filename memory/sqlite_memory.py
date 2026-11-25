@@ -1,8 +1,9 @@
-import sqlite3
 import os
-from datetime import datetime
+import sqlite3
+from datetime import datetime, timezone
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "../data/memory.db")
+
 
 def get_connection():
     global DB_PATH
@@ -15,10 +16,11 @@ def get_connection():
     except PermissionError:
         DB_PATH = "/tmp/memory.db"
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = get_connection()
@@ -32,48 +34,64 @@ def init_db():
             timestamp TEXT NOT NULL
         )
     """)
-    # Add rating column if missing (SQLite ALTER TABLE)
     try:
         conn.execute("ALTER TABLE chat_history ADD COLUMN rating INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
-        pass # Column already exists
+        pass
     conn.commit()
     conn.close()
+
 
 def save_message(session_id: str, model: str, role: str, content: str) -> int:
     conn = get_connection()
     cursor = conn.execute(
         "INSERT INTO chat_history (session_id, model, role, content, timestamp, rating) VALUES (?, ?, ?, ?, ?, 0)",
-        (session_id, model, role, content, datetime.utcnow().isoformat())
+        (session_id, model, role, content, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     inserted_id = cursor.lastrowid
     conn.close()
     return inserted_id
 
-def get_history(session_id: str, model: str, limit: int = 20) -> list[dict]:
+
+def count_history(session_id: str, model: str) -> int:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT COUNT(*) as total FROM chat_history WHERE session_id=? AND model=?",
+        (session_id, model),
+    ).fetchone()
+    conn.close()
+    return int(row["total"]) if row else 0
+
+
+def get_history(session_id: str, model: str, limit: int = 20, offset: int = 0) -> list[dict]:
     conn = get_connection()
     rows = conn.execute(
-        "SELECT id, role, content, rating FROM chat_history WHERE session_id=? AND model=? ORDER BY id DESC LIMIT ?",
-        (session_id, model, limit)
+        "SELECT id, role, content, rating FROM chat_history WHERE session_id=? AND model=? ORDER BY id DESC LIMIT ? OFFSET ?",
+        (session_id, model, limit, offset),
     ).fetchall()
     conn.close()
-    return [{"id": r["id"], "role": r["role"], "content": r["content"], "rating": r["rating"]} for r in reversed(rows)]
+    return [
+        {"id": r["id"], "role": r["role"], "content": r["content"], "rating": r["rating"] or 0}
+        for r in reversed(rows)
+    ]
+
 
 def clear_history(session_id: str, model: str):
     conn = get_connection()
     conn.execute(
         "DELETE FROM chat_history WHERE session_id=? AND model=?",
-        (session_id, model)
+        (session_id, model),
     )
     conn.commit()
     conn.close()
+
 
 def rate_message(message_id: int, rating: int):
     conn = get_connection()
     conn.execute(
         "UPDATE chat_history SET rating=? WHERE id=?",
-        (rating, message_id)
+        (rating, message_id),
     )
     conn.commit()
     conn.close()
