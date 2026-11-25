@@ -1,49 +1,34 @@
-import re
-from tools.calculator import calculate, TOOL_DEFINITION as CALC_DEF
-from tools.datetime_tool import get_datetime_info, TOOL_DEFINITION as DT_DEF
-from tools.web_search import search_web, TOOL_DEFINITION as SEARCH_DEF
+"""Tool router dispatching queries to registered BaseTool instances."""
 
-_DATETIME_PATTERN = re.compile(
-    r'\b(date|time|today|now|year|month|when)\b|what (day|time) is it',
-    re.IGNORECASE
-)
+from typing import Optional, Sequence
 
-def _triggers_datetime(text: str) -> bool:
-    return bool(_DATETIME_PATTERN.search(text))
+from tools.base import BaseTool
+from tools.calculator import CalculatorTool
+from tools.datetime_tool import DatetimeTool
+from tools.web_search import WebSearchTool
 
-def _has_math_expression(text: str) -> bool:
-    """Detect if the message contains an inline math expression."""
-    return bool(re.search(r'\d+\s*[\+\-\*\/\%\^]\s*\d+', text))
 
-def route_tool(user_message: str) -> tuple[str | None, str | None]:
-    """
-    Check if the user message should trigger a tool.
-    Returns: (tool_name, tool_result) or (None, None)
-    """
-    msg_lower = user_message.lower()
+class ToolRouter:
+    """Routes user queries to the first matching tool in priority order."""
 
-    # Datetime check
-    if _triggers_datetime(msg_lower):
-        result = get_datetime_info(user_message)
-        return "datetime", result
+    def __init__(self, tools: Optional[Sequence[BaseTool]] = None) -> None:
+        self.tools: list[BaseTool] = (
+            list(tools)
+            if tools is not None
+            else [DatetimeTool(), CalculatorTool(), WebSearchTool()]
+        )
 
-    # Calculator check — keyword OR inline expression
-    has_calc_kw = any(re.search(rf"\b{re.escape(kw)}\b", msg_lower) for kw in CALC_DEF["trigger_keywords"])
-    has_expr = _has_math_expression(user_message)
+    def route(self, user_message: str) -> tuple[Optional[str], Optional[str]]:
+        """Check registered tools and execute the first one that matches."""
+        for tool in self.tools:
+            if tool.can_handle(user_message):
+                return tool.name, tool.run(user_message)
+        return None, None
 
-    if has_calc_kw or has_expr:
-        # Try to extract math expression from message
-        expr_match = re.search(r'[\d\(][\d\s\+\-\*\/\%\^\(\)\.]*[\d\)]', user_message)
-        if expr_match:
-            expr = expr_match.group().strip()
-            if re.search(r'\d', expr) and re.search(r'[\+\-\*\/]', expr):
-                result = calculate(expr)
-                return "calculator", result
 
-    # Web Search check
-    for kw in SEARCH_DEF["trigger_keywords"]:
-        if re.search(rf"\b{re.escape(kw)}\b", msg_lower):
-            result = search_web(user_message)
-            return "web_search", result
+_default_router = ToolRouter()
 
-    return None, None
+
+def route_tool(user_message: str) -> tuple[Optional[str], Optional[str]]:
+    """Check if the user message should trigger a tool."""
+    return _default_router.route(user_message)
