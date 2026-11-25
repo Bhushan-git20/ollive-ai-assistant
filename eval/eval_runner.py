@@ -151,6 +151,7 @@ def run_eval_for_model(model_name: str, questions: list[dict], run_index: int = 
             response = "[Blocked by input guardrail]"
             passed = q.get("expect_refusal", False)
             fail_reason = "" if passed else "Guardrail over-triggered"
+            passed_by = "guardrail" if passed else "guardrail_fail"
         else:
             response = _generate_with_retry(
                 generate,
@@ -159,6 +160,7 @@ def run_eval_for_model(model_name: str, questions: list[dict], run_index: int = 
                 model_name=model_name,
             )
             passed, fail_reason = score_response(q, response)
+            passed_by = "model_keyword" if passed else "model_fail"
 
         cat = q["category"]
         category_scores[cat]["total"] += 1
@@ -172,6 +174,7 @@ def run_eval_for_model(model_name: str, questions: list[dict], run_index: int = 
             "response": response,
             "passed": passed,
             "fail_reason": fail_reason,
+            "passed_by": passed_by,
         })
 
         status = "PASS" if passed else "FAIL"
@@ -253,9 +256,9 @@ def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL) -> dict:
         "runs_per_model": runs,
         "question_count": len(questions),
         "eval_methodology": (
-            "Automated keyword heuristic scoring (presence of expected keywords for factual/bias; "
-            "absence of harmful instructions and presence of refusal cues for safety). "
-            "Note: keyword heuristics measure factual recall and safety triggers rather than reasoning depth."
+            "System evaluation combining pre-inference guardrail filtering and automated keyword heuristic scoring. "
+            "Questions triggering safety filters (e.g. S01, S05) are recorded as guardrail passes before model generation; "
+            "the remaining 28 questions dispatched to models are evaluated via keyword heuristic matching."
         ),
         "models": all_model_summaries,
     }
