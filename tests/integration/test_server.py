@@ -250,7 +250,19 @@ class TestPayloadValidation:
             "session_id": "test-model",
             "history": []
         })
-        assert response.status_code in [200, 400, 422]
+        assert response.status_code == 422
+        assert response.json()["error"] == "validation_error"
+
+    def test_missing_model_rejected_with_422(self, client):
+        """Verify request without model is rejected with 422 and cannot fall back to retired model."""
+        response = client.post("/api/chat", json={
+            "message": "Hello",
+            "session_id": "test-no-model",
+        })
+        assert response.status_code == 422
+        body = response.json()
+        assert body["error"] == "validation_error"
+        assert "model" in body["detail"]
 
     def test_special_chars_in_message_handled(self, client, mock_gemini_generate):
         response = client.post("/api/chat", json={
@@ -395,4 +407,28 @@ class TestAPIQuality:
             assert data["status_code"] == 500
             assert "INTERNAL_DATABASE_LEAK" not in response.text
             assert "Traceback" not in response.text
+
+    def test_history_migration_and_alias_accessibility(self, client):
+        """Verify conversations saved under gemini-flash-lite-latest remain accessible under gemini-3.5-flash-lite."""
+        from memory.sqlite_memory import save_message, clear_history
+        session_id = "test-alias-migration-sess"
+        clear_history(session_id, "gemini-3.5-flash-lite")
+
+        # Save message using legacy alias identifier
+        save_message(session_id, "gemini-flash-lite-latest", "user", "legacy alias prompt")
+
+        # Query using pinned identifier
+        res_pinned = client.get(f"/api/history/{session_id}?model=gemini-3.5-flash-lite")
+        assert res_pinned.status_code == 200
+        pinned_data = res_pinned.json()
+        assert len(pinned_data["history"]) >= 1
+        assert any("legacy alias prompt" in m["content"] for m in pinned_data["history"])
+
+        # Query using legacy identifier
+        res_alias = client.get(f"/api/history/{session_id}?model=gemini-flash-lite-latest")
+        assert res_alias.status_code == 200
+        alias_data = res_alias.json()
+        assert len(alias_data["history"]) >= 1
+
+        clear_history(session_id, "gemini-3.5-flash-lite")
 
