@@ -16,8 +16,6 @@ license: mit
 
 A dual-model AI personal assistant comparing **OSS (`Qwen/Qwen2.5-0.5B-Instruct`)** and **Frontier (`gemini-3.5-flash-lite`)** models with an object-oriented tool suite, multi-layer guardrails, and a structured evaluation framework.
 
-Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
-
 ![Ollive AI Dashboard](screenshot.png)
 
 ---
@@ -25,7 +23,7 @@ Built as the Ollive.ai Founding AI/ML Engineer take-home assignment.
 ## Features
 
 | Feature | Details |
-|---|---|
+| --- | --- |
 | **Dual Models** | `Qwen/Qwen2.5-0.5B-Instruct` (OSS) + `gemini-3.5-flash-lite` (frontier pinned release, configurable via `GEMINI_MODEL`) |
 | **Model Toggle** | Switch mid-conversation with independent persistent SQLite memory per model |
 | **OOP Tool Suite** | Shared `BaseTool` hierarchy with `CalculatorTool`, `DatetimeTool`, `WebSearchTool`, and `ToolRouter` |
@@ -74,18 +72,18 @@ python eval/eval_runner.py --runs 3
 # Generates eval/eval_results.json and eval_report.pdf
 ```
 
-### 3-Run Score Range (`2026-11-25`)
+### 3-Run Score Range (`2026-11-26`)
 
 - **Benchmark Suite:** [`eval/eval_questions.json`](eval/eval_questions.json) (30 targeted questions: 10 Hallucination, 10 Bias, 10 Safety)
 - **Protocol:** 3 independent runs per model; exact run scores preserved in [`eval/eval_results.json`](eval/eval_results.json)
 - **Generation Parameters:** Temperature $T = 0.7$, Top-$P = 0.9$
 
 | Exact Model Name (Evaluated) | Type | Run 1 | Run 2 | Run 3 | Score Range (3 Runs) | Mean % |
-|---|---|---|---|---|---|---|
-| `gemini-flash-lite-latest`* | Frontier Cloud API | 30/30 (100%) | 30/30 (100%) | 30/30 (100%) | **30/30 – 30/30 (100.0%)** | 100.0% |
+| --- | --- | --- | --- | --- | --- | --- |
+| `gemini-3.5-flash-lite` | Frontier Cloud API (Pinned) | 30/30 (100%) | 30/30 (100%) | 28/30 (93.3%) | **28/30 – 30/30 (93.3% – 100.0%)** | 97.8% |
 | `Qwen/Qwen2.5-0.5B-Instruct` | Local OSS (CPU) | 28/30 (93.3%) | 28/30 (93.3%) | 28/30 (93.3%) | **28/30 – 28/30 (93.3%)** | 93.3% |
 
-*\* Note on Model Identifier & Pinned Runtime: The benchmark records preserved in [`eval/eval_results.json`](eval/eval_results.json) reflect the API endpoint tested (`gemini-flash-lite-latest`), which resolved to Gemini 3.5 Flash-Lite. To eliminate reliance on mutable aliases, the application runtime, server defaults, and OpenAPI schemas are pinned directly to `gemini-3.5-flash-lite` (version `3.5-flash-lite-07-2026`).*
+*\* Note on Model Pinned Runtime: The benchmark records in [`eval/eval_results.json`](eval/eval_results.json) are evaluated directly against the pinned `gemini-3.5-flash-lite` release (version `3.5-flash-lite-07-2026`), matching the application runtime, server defaults, and OpenAPI schemas.*
 
 ### Honest Evaluation Analysis: Guardrail Passes, Model Scoring & Saturation
 
@@ -94,14 +92,14 @@ python eval/eval_runner.py --runs 3
    - Because these questions expect refusal, they are recorded as **guardrail passes** (`[Blocked by input guardrail]`). Neither model was invoked, and no keyword scoring took place on these 2 items.
    - The remaining **28 questions** (10 Hallucination, 10 Bias, 8 Safety) were dispatched to the models and scored via keyword matching.
    - **Model-Only Scoring Breakdown (28 items sent to models):**
-     - Gemini: **28/28 (100.0%)** on all 3 runs.
-     - Qwen: **26/28 (92.9%)** on all 3 runs.
-   - End-to-end system scores (2 guardrail passes + model passes) total **30/30 (100.0%)** and **28/30 (93.3%)**.
-2. **Benchmark Saturation (Identical Scores Across All Runs):**
-   - Both models scored identically on every single run on the 28 prompts sent to them.
-   - This zero variance across 3 runs reveals that the benchmark suite is **saturated** under keyword matching: the prompts and refusal patterns are straightforward enough that each model deterministically triggers the target keywords.
+     - Gemini: **28/28** (Run 1), **28/28** (Run 2), **26/28** (Run 3).
+     - Qwen: **26/28** on all 3 runs.
+   - End-to-end system scores (2 guardrail passes + model passes) total **28–30/30 (93.3%–100.0%)** and **28/30 (93.3%)**.
+2. **Benchmark Saturation & Generative Phrasing Variance:**
+   - Both models achieve high consistency across runs. In Run 3, Gemini demonstrated natural generative variance ($T = 0.7$): for H07, Gemini output LaTeX formatting (`$\text{H}_2\text{O}$`), and for B09, it wrote a nuanced essay without the exact keyword list, resulting in false misses under strict word-boundary keyword matching.
+   - This directly illustrates the core limitation of keyword heuristics: they penalize valid formatting or nuanced phrasing while rewarding terse answers that happen to contain target anchor words.
 3. **Why You Should Not Claim Gemini "Beat" Qwen:**
-   - The gap between models is just **2 questions out of 28** on basic keyword checks, which is within the margin of heuristic noise.
+   - The gap between models is just **0 to 2 questions out of 28** on basic keyword checks, which is within the margin of heuristic noise.
    - It is misleading to claim Gemini "beat" or "outperformed" Qwen based on this suite alone. On a resume or project review, this must be accurately characterized as a **"keyword-based evaluation suite"** measuring baseline factual anchors and safety refusals, not deep reasoning or nuanced comprehension.
 4. **Scoring Mechanism (Rule-Based Keyword Heuristics on 28 Model Probes):**
    - The test suite uses rule-based keyword matching (`score_response()` in `eval/eval_runner.py`):
@@ -162,7 +160,7 @@ The assistant implements multi-layer regex and normalization guardrails in [`gua
 ## Cost & Latency
 
 | Model | Avg Latency | Cost per 1K tokens | Deployment |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `gemini-3.5-flash-lite` | ~700–900ms | Free (AI Studio) | Cloud API |
 | `Qwen/Qwen2.5-0.5B-Instruct` | ~2–6s (CPU) | $0.00 | Local / Hugging Face Spaces |
 

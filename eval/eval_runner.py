@@ -223,12 +223,12 @@ def _summarize_runs(runs_data: list[dict]) -> dict:
     }
 
 
-def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL) -> dict:
+def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL, skip_qwen: bool = False) -> dict:
     init_logs_db()
     questions = load_questions()
     print(f"Loaded {len(questions)} eval questions. Running {runs} pass(es) per model.")
 
-    models = [gemini_model, "qwen2.5-0.5B"]
+    models = [gemini_model] if skip_qwen else [gemini_model, "qwen2.5-0.5B"]
     all_model_summaries = {}
     latest_results_for_pdf = {}
 
@@ -249,6 +249,24 @@ def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL) -> dict:
         all_model_summaries[model] = summary
         latest_results_for_pdf[summary["exact_model_name"]] = model_runs[-1]
 
+    # If skip_qwen, preserve existing Qwen summary from previous eval run
+    existing_summaries = {}
+    if os.path.exists(EVAL_RESULTS_JSON_PATH):
+        try:
+            with open(EVAL_RESULTS_JSON_PATH, "r", encoding="utf-8") as f:
+                old_payload = json.load(f)
+                existing_summaries = old_payload.get("models", {})
+                if skip_qwen and "qwen2.5-0.5B" in existing_summaries:
+                    qwen_runs = existing_summaries["qwen2.5-0.5B"].get("runs", [])
+                    if qwen_runs:
+                        latest_results_for_pdf[existing_summaries["qwen2.5-0.5B"]["exact_model_name"]] = qwen_runs[-1]
+        except Exception:
+            pass
+
+    merged_summaries = {**existing_summaries, **all_model_summaries}
+    if gemini_model == "gemini-3.5-flash-lite":
+        merged_summaries.pop("gemini-flash-lite-latest", None)
+
     generated_at = datetime.now(timezone.utc).isoformat()
     json_payload = {
         "generated_at": generated_at,
@@ -260,7 +278,7 @@ def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL) -> dict:
             "Questions triggering safety filters (e.g. S01, S05) are recorded as guardrail passes before model generation; "
             "the remaining 28 questions dispatched to models are evaluated via keyword heuristic matching."
         ),
-        "models": all_model_summaries,
+        "models": merged_summaries,
     }
     with open(EVAL_RESULTS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(json_payload, f, indent=2, ensure_ascii=False)
@@ -272,10 +290,10 @@ def main(runs: int = 3, gemini_model: str = DEFAULT_EVAL_GEMINI_MODEL) -> dict:
     print("\n" + "=" * 60)
     print("EVAL COMPLETE")
     print("=" * 60)
-    for model, summary in all_model_summaries.items():
+    for model, summary in merged_summaries.items():
         print(
             f"  {summary['exact_model_name']} (T={summary['temperature']}): "
-            f"{summary['score_range']} ({summary['pct_range']}) across {runs} run(s)"
+            f"{summary['score_range']} ({summary['pct_range']}) across {summary['runs_count']} run(s)"
         )
     print(f"\nJSON saved: {EVAL_RESULTS_JSON_PATH}")
     print(f"PDF saved : {output_path}")
@@ -286,5 +304,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Ollive AI evaluation suite.")
     parser.add_argument("--runs", type=int, default=3, help="Number of evaluation runs per model (default: 3)")
     parser.add_argument("--model", type=str, default=DEFAULT_EVAL_GEMINI_MODEL, help="Frontier model name to evaluate")
+    parser.add_argument("--skip-qwen", action="store_true", help="Skip Qwen evaluation and preserve existing Qwen results")
     args = parser.parse_args()
-    main(runs=max(1, args.runs), gemini_model=args.model)
+    main(runs=max(1, args.runs), gemini_model=args.model, skip_qwen=args.skip_qwen)
